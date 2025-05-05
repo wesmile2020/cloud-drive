@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "server-side"
+		},
+		{
+			"path": "web-side"
+		}
+	],
+	"settings": {}
+}

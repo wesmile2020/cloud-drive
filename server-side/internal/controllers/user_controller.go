@@ -1,0 +1,155 @@
+package controllers
+
+import (
+	"cloud-drive/internal/models"
+	"cloud-drive/internal/services"
+	"cloud-drive/middleware"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+)
+
+var validate = validator.New()
+
+type UserController struct {
+	service *services.UserService
+}
+
+func NewUserController(service *services.UserService) *UserController {
+	return &UserController{
+		service: service,
+	}
+}
+
+// RegisterUser 处理用户注册请求
+func (controller *UserController) RegisterUser(ctx *gin.Context) {
+	var request models.RegisterUserRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+
+	serviceUser := &models.ServiceUser{
+		Name:  request.Name,
+		Email: request.Email,
+		Phone: request.Phone,
+	}
+
+	if err := controller.service.RegisterUser(serviceUser, request.Password); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "注册成功",
+		Data:    nil,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) LoginUser(ctx *gin.Context) {
+	var request models.LoginUserRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+
+	serviceUser, err := controller.service.LoginUser(request.Account, request.Password)
+	if err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "登录失败",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	tokenString, err := middleware.GenerateJWTToken(serviceUser.ID)
+	if err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "生成token失败",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	// token 有效期是一周，设置cookie
+	ctx.SetCookie("token", tokenString, int(middleware.Duration*3600), "/", "", false, true)
+
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "登录成功",
+		Data:    serviceUser,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) GetUserInfo(ctx *gin.Context) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		response := models.Response{
+			Code:    http.StatusUnauthorized,
+			Message: "未登录",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	user, err := controller.service.GetUserInfo(userID.(uint))
+	if err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "获取用户信息失败",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+	}
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "获取用户信息成功",
+		Data:    user,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
+	userGroup := router.Group("/user")
+	{
+		userGroup.POST("/register", controller.RegisterUser)
+		userGroup.POST("/login", controller.LoginUser)
+	}
+	// 验证token的中间件
+	authGroup := router.Group("/user", middleware.AuthMiddleware())
+	{
+		authGroup.GET("/info", controller.GetUserInfo)
+	}
+}
