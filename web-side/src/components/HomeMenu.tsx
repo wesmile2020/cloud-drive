@@ -11,10 +11,10 @@ interface Props {
 function HomeMenu(props: Props) {
   const [open, setOpen] = React.useState(false);
   const [userInfo] = useUserInfo();
-  function triggerCreateDirectory() {
+  async function triggerCreateDirectory() {
     if (!userInfo) {
       message.error('请先登录');
-      return;
+      return; 
     }
     setOpen(true);
   }

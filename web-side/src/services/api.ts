@@ -6,8 +6,12 @@ axios.interceptors.response.use(
     if (response.status === 200 && response.data.code === 200) {
       return response.data;
     } else {
-      message.error(response.data.message);
-      throw new Error(response.data.code);
+      if (response.data.code === 401) {
+        throw new Error(response.data.code);
+      } else {
+        message.error(response.data.message);
+        throw new Error(response.data.message);
+      }
     }
    
   },
@@ -24,15 +28,22 @@ export interface RegisterParams {
   phone: string;
 }
 
-export async function register(params: RegisterParams) {
+export function register(params: RegisterParams) {
   return axios.post('/api/user/register', params);
 }
 
-export async function login(account: string, password: string) {
+export function login(account: string, password: string) {
   return axios.post('/api/user/login', { account, password });
 }
 
-export async function getUserInfo() {
+export interface UserInfo {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export function getUserInfo(): Promise<UserInfo> {
   return axios.get('/api/user/info');
 }
 
@@ -44,4 +55,8 @@ interface CreateDirectoryParams {
 
 export async function createDirectory(params: CreateDirectoryParams) {
   return axios.post('/api/file/directory', params);
+}
+
+export async function getFiles(parentId: string) {
+  return axios.get(`/api/file/files/${parentId}`);
 }

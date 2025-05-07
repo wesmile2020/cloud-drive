@@ -2,8 +2,8 @@ package models
 
 import "gorm.io/gorm"
 
-// ServiceUser 用于和前端交互的用户模型
-type ServiceUser struct {
+// APIUser 用于和前端交互的用户模型
+type APIUser struct {
 	ID    uint   `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -35,8 +35,8 @@ func (password DBPassword) TableName() string {
 	return "password"
 }
 
-// ToDBUser 将 ServiceUser 转换为 DBUser
-func (user ServiceUser) ToDBUser() DBUser {
+// ToDBUser 将 APIUser 转换为 DBUser
+func (user APIUser) ToDBUser() DBUser {
 	return DBUser{
 		Name:  user.Name,
 		Email: user.Email,
@@ -44,9 +44,9 @@ func (user ServiceUser) ToDBUser() DBUser {
 	}
 }
 
-// ToServiceUser 将 DBUser 转换为 ServiceUser
-func (user DBUser) ToServiceUser() ServiceUser {
-	return ServiceUser{
+// ToAPIUser 将 DBUser 转换为 APIUser
+func (user DBUser) ToAPIUser() APIUser {
+	return APIUser{
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,

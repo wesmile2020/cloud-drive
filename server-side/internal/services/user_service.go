@@ -20,20 +20,22 @@ func NewUserService(db *gorm.DB) *UserService {
 }
 
 // RegisterUser 注册新用户
-func (service *UserService) RegisterUser(serviceUser *models.ServiceUser, password string) error {
+func (service *UserService) RegisterUser(apiUser *models.APIUser, password string) error {
+	var existCount int64 = 0
 	// 检查phone是否已存在
-	var existingUser models.DBUser
-	if err := service.DB.Where("phone = ?", serviceUser.Phone).First(&existingUser).Error; err == nil {
+	service.DB.Where("phone = ?", apiUser.Phone).Count(&existCount)
+	if existCount > 0 {
 		return errors.New("手机号已被注册")
 	}
 
 	// 检查email是否已存在
-	if err := service.DB.Where("email = ?", serviceUser.Email).First(&existingUser).Error; err == nil {
+	service.DB.Where("email = ?", apiUser.Email).Count(&existCount)
+	if existCount > 0 {
 		return errors.New("邮箱已被注册")
 	}
 
 	// 插入用户表
-	dbUser := serviceUser.ToDBUser()
+	dbUser := apiUser.ToDBUser()
 	if err := service.DB.Create(&dbUser).Error; err != nil {
 		return err
 	}
@@ -54,7 +56,7 @@ func (service *UserService) RegisterUser(serviceUser *models.ServiceUser, passwo
 }
 
 // LoginUser 用户登录
-func (service *UserService) LoginUser(account, password string) (*models.ServiceUser, error) {
+func (service *UserService) LoginUser(account, password string) (*models.APIUser, error) {
 	// 根据 account 查询用户，account 可能是 phone 或 email
 	var existingUser models.DBUser
 	if err := service.DB.Where("phone = ? OR email = ?", account, account).First(&existingUser).Error; err != nil {
@@ -75,19 +77,19 @@ func (service *UserService) LoginUser(account, password string) (*models.Service
 		return nil, errors.New("账号或者密码错误")
 	}
 
-	serviceUser := existingUser.ToServiceUser()
+	apiUser := existingUser.ToAPIUser()
 
-	return &serviceUser, nil
+	return &apiUser, nil
 }
 
 // 获取用户登录信息
-func (service *UserService) GetUserInfo(userID uint) (*models.ServiceUser, error) {
+func (service *UserService) GetUserInfo(userID uint) (*models.APIUser, error) {
 	var dbUser models.DBUser
 	if err := service.DB.First(&dbUser, userID).Error; err != nil {
 		return nil, err
 	}
 
-	serviceUser := dbUser.ToServiceUser()
+	apiUser := dbUser.ToAPIUser()
 
-	return &serviceUser, nil
+	return &apiUser, nil
 }

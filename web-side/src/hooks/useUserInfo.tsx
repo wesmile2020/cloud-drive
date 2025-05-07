@@ -1,26 +1,34 @@
+import { getUserInfo, UserInfo } from '@/services/api';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router';
 
-interface UserInfo {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-}
+type UserInfoContextType = [UserInfo | null, (toLogin?: boolean) => Promise<void>];
 
-
-const UserInfoContext = React.createContext<[UserInfo | null, () => Promise<void>]>([null, () => Promise.resolve()]);
+const UserInfoContext = React.createContext<UserInfoContextType>([null, () => Promise.resolve()]);
 
 export function UserInfoProvider({ children }: React.PropsWithChildren) {
   const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
+  const fetchPromise = React.useRef<Promise<UserInfo> | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const fetchUserInfo = React.useCallback(async () => {
-    const response = await fetch('/api/user/info');
-    const data = await response.json();
-    setUserInfo(data);
-  }, []);
+  const fetchUserInfo = React.useCallback(async (toLogin = true) => {
+    try {
+      if (!fetchPromise.current) {
+        fetchPromise.current = getUserInfo();
+      }
+      const data = await fetchPromise.current;
+      setUserInfo(data);
+    } catch (error) {
+      const code = (error as Error).message;
+      if (code === '401' && toLogin) {
+        navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      }
+    }
+  }, [location.pathname, navigate]);
 
   React.useEffect(() => {
-    fetchUserInfo();
+    fetchUserInfo(false);
   }, [fetchUserInfo]);
 
   return (
@@ -30,4 +38,5 @@ export function UserInfoProvider({ children }: React.PropsWithChildren) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useUserInfo = () => React.useContext(UserInfoContext);

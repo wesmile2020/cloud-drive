@@ -1,5 +1,6 @@
+import React from 'react';
 import { Form, Input, Button, message } from 'antd';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, useSearchParams } from 'react-router';
 import styles from './LoginPage.module.css';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 
@@ -11,10 +12,22 @@ interface LoginParams {
 }
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+
+  const registerUrl = React.useMemo(() => {
+    const redirect = params.get('redirect');
+    if (redirect) {
+      return `/register?redirect=${encodeURIComponent(redirect)}`;
+    }
+    return `/register`;
+  }, [params]);
 
   const onFinish = async (values: LoginParams) => {
     await login(values.account, values.password);
     message.success('登录成功');
+    const redirect = params.get('redirect') ?? '/';
+    navigate(redirect);
   };
 
   return (
@@ -57,7 +70,7 @@ function LoginPage() {
         </Form>
         <div className={styles.login_link}>
           <span>还没有账号？</span>
-          <Link to="/register" className={styles.login_link_text}>
+          <Link to={registerUrl} className={styles.login_link_text}>
             立即注册
           </Link>
         </div>

@@ -4,13 +4,12 @@ import React from 'react';
 import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 
-import styles from './HomeLayout.module.css'
-
+import styles from './HomeLayout.module.css';
 
 const menus = [
   {
-    key: '/',
-    label: <Link to="/">首页</Link>,
+    key: '/home',
+    label: <Link to="/home/0">首页</Link>,
     icon: <HomeOutlined />
   },
   {
@@ -24,12 +23,18 @@ function HomeLayout() {
   const location = useLocation();
   const [selectedKeys, setSelectedKeys] = React.useState<string[]>([])
   React.useEffect(() => {
+    if (/\/home/.test(location.pathname)) {
+      setSelectedKeys(['/home']);
+      return;
+    }
     for (const item of menus) {
       if (item.key === location.pathname) {
-        setSelectedKeys([item.key])
+        setSelectedKeys([item.key]);
+        return;
       }
     }
-  }, [location.pathname])
+
+  }, [location.pathname]);
 
   return (
     <Layout className={styles.home_layout}>

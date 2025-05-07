@@ -5,6 +5,7 @@ import (
 	"cloud-drive/internal/services"
 	"cloud-drive/middleware"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -44,7 +45,7 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 			Data:    nil,
 		})
 	}
-	directory := &models.ServiceDirectory{
+	directory := &models.APIDirectory{
 		UserID:   userID.(uint),
 		Name:     request.Name,
 		ParentID: *request.ParentID,
@@ -67,10 +68,45 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 	})
 }
 
+func (controller *FileController) GetFiles(ctx *gin.Context) {
+	var uid uint = 0
+	directoryID := ctx.Param("directoryID")
+	if directoryID == "" {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Directory ID is required",
+			Data:    nil,
+		})
+		return
+	}
+
+	dirId, err := strconv.ParseUint(directoryID, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid directory ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	userID, exists := ctx.Get("userID")
+	if exists {
+		uid = userID.(uint)
+	}
+	files := controller.service.GetFiles(uint(dirId), uid)
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    files,
+	})
+}
+
 func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
 	authGroup := router.Group("/file")
 	authGroup.Use(middleware.AuthMiddleware())
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
+		authGroup.GET("/files/:directoryID", controller.GetFiles)
 	}
 }

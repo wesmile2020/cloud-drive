@@ -10,8 +10,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-var validate = validator.New()
-
 type UserController struct {
 	service *services.UserService
 }
@@ -40,13 +38,13 @@ func (controller *UserController) RegisterUser(ctx *gin.Context) {
 		return
 	}
 
-	serviceUser := &models.ServiceUser{
+	apiUser := &models.APIUser{
 		Name:  request.Name,
 		Email: request.Email,
 		Phone: request.Phone,
 	}
 
-	if err := controller.service.RegisterUser(serviceUser, request.Password); err != nil {
+	if err := controller.service.RegisterUser(apiUser, request.Password); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -81,17 +79,17 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	serviceUser, err := controller.service.LoginUser(request.Account, request.Password)
+	apiUser, err := controller.service.LoginUser(request.Account, request.Password)
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
-			Message: "登录失败",
+			Message: err.Error(),
 			Data:    nil,
 		}
 		ctx.JSON(http.StatusOK, response)
 		return
 	}
-	tokenString, err := middleware.GenerateJWTToken(serviceUser.ID)
+	tokenString, err := middleware.GenerateJWTToken(apiUser.ID)
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
@@ -107,7 +105,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 	response := models.Response{
 		Code:    http.StatusOK,
 		Message: "登录成功",
-		Data:    serviceUser,
+		Data:    apiUser,
 	}
 	ctx.JSON(http.StatusOK, response)
 }

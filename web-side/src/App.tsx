@@ -21,9 +21,10 @@ function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomeLayoutWithProvider />}>
-          <Route path="/:id" element={<HomePage />} />
+          <Route path="/home/:id" element={<HomePage />} />
           <Route path="/user" element={<UserPage />} />
-          <Route path="/" element={<Navigate to="/0" replace />} />
+          <Route path="/" element={<Navigate to="/home/0" replace />} />
+          <Route path="/home" element={<Navigate to="/home/0" replace />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
