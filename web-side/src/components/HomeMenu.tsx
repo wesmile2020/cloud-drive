@@ -6,6 +6,7 @@ import { useUserInfo } from '@/hooks/useUserInfo';
 
 interface Props {
   directoryId: number;
+  afterCreate?: () => void;
 }
 
 function HomeMenu(props: Props) {
@@ -32,6 +33,7 @@ function HomeMenu(props: Props) {
       </FloatButton.Group>
       <CreateDirectory open={open}
         directoryId={props.directoryId}
+        afterCreate={props.afterCreate}
         onClose={() => setOpen(false)}/>
     </>
   );

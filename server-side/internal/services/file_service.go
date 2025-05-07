@@ -35,15 +35,15 @@ func (service *FileService) DeleteDirectory(directoryID uint) error {
 	return nil
 }
 
-func (service *FileService) GetFileTree(directoryID uint) *models.APIFileTree {
+func (service *FileService) GetFileTree(directoryID uint, userID uint) *models.APIFileTree {
 	var dbDirectory models.DBDirectory
 	var tree *models.APIFileTree = nil
-	if err := service.DB.Where("id =?", directoryID).First(&dbDirectory).Error; err == nil {
+	if err := service.DB.Where("id = ? and (user_id = ? or public = ?)", directoryID, userID, true).First(&dbDirectory).Error; err == nil {
 		tree = &models.APIFileTree{}
 		tree.ID = dbDirectory.ID
 		tree.Name = dbDirectory.Name
 		if dbDirectory.ParentID != 0 {
-			tree.Parent = service.GetFileTree(dbDirectory.ParentID)
+			tree.Parent = service.GetFileTree(dbDirectory.ParentID, userID)
 		}
 	}
 

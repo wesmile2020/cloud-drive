@@ -1,7 +1,13 @@
 .breadcrumb_wrapper {
-  padding: 20px 0;
+  margin-bottom: 10px;
 }
 
 .breadcrumb {
   background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.text {
+  margin-left: 4px;
 }

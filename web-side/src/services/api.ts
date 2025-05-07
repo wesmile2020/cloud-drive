@@ -81,5 +81,5 @@ export interface FileTreeResponse {
 }
 
 export function getFiles(parentId: number): Promise<FileTreeResponse> {
-  return axios.get(`/api/file/files/${parentId}`);
+  return axios.get(`/api/file/${parentId}`);
 }

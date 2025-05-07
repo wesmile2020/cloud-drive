@@ -126,7 +126,7 @@ func (controller *UserController) GetUserInfo(ctx *gin.Context) {
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
-			Message: "获取用户信息失败",
+			Message: "用户不存在",
 			Data:    nil,
 		}
 		ctx.JSON(http.StatusOK, response)
@@ -134,7 +134,7 @@ func (controller *UserController) GetUserInfo(ctx *gin.Context) {
 	}
 	response := models.Response{
 		Code:    http.StatusOK,
-		Message: "获取用户信息成功",
+		Message: "",
 		Data:    user,
 	}
 	ctx.JSON(http.StatusOK, response)

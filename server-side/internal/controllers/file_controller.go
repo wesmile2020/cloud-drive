@@ -69,7 +69,6 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 }
 
 func (controller *FileController) GetFiles(ctx *gin.Context) {
-	var uid uint = 0
 	directoryID := ctx.Param("directoryID")
 	if directoryID == "" {
 		ctx.JSON(http.StatusOK, &models.Response{
@@ -90,13 +89,18 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 		return
 	}
 
-	userID, exists := ctx.Get("userID")
-	if exists {
-		uid = userID.(uint)
+	var uid uint = 0
+	tokenString, err := ctx.Cookie("token")
+	if err == nil {
+		claims, err := middleware.ParseJWTToken(tokenString)
+		if err == nil {
+			uid = claims.UserID
+		}
 	}
+
 	files := controller.service.GetFiles(uint(dirId), uid)
 
-	tree := controller.service.GetFileTree(uint(dirId))
+	tree := controller.service.GetFileTree(uint(dirId), uid)
 
 	ctx.JSON(http.StatusOK, &models.Response{
 		Code:    http.StatusOK,
@@ -106,10 +110,13 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 }
 
 func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
-	authGroup := router.Group("/file")
-	authGroup.Use(middleware.AuthMiddleware())
+	fileGroup := router.Group("/file")
+	{
+		fileGroup.GET("/:directoryID", controller.GetFiles)
+	}
+
+	authGroup := router.Group("/file", middleware.AuthMiddleware())
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
-		authGroup.GET("/files/:directoryID", controller.GetFiles)
 	}
 }

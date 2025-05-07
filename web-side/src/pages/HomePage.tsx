@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useParams } from 'react-router';
 import { Breadcrumb, BreadcrumbProps } from 'antd';
+import { HomeFilled } from '@ant-design/icons';
 
 import HomeMenu from '@/components/HomeMenu';
 import FileList from '@/components/FileList';
@@ -8,7 +9,6 @@ import FileList from '@/components/FileList';
 import { FileTreeResponse, getFiles } from '@/services/api';
 
 import styles from './HomePage.module.css';
-import { HomeFilled, HomeOutlined } from '@ant-design/icons';
 
 function createBreadcrumbItems(tree: FileTreeResponse['tree'] | null) {
   const result: BreadcrumbProps['items'] = [];
@@ -26,12 +26,12 @@ function createBreadcrumbItems(tree: FileTreeResponse['tree'] | null) {
     title: result.length > 0 ? (
       <Link to="/home/0">
         <HomeFilled />
-        <span>首页</span>
+        <span className={styles.text}>首页</span>
       </Link>
     ) : (
       <>
-        <HomeOutlined />
-        <span>首页</span>
+        <HomeFilled />
+        <span className={styles.text}>首页</span>
       </>
     ),
   });
@@ -48,20 +48,26 @@ function Home() {
   const [loading, setLoading] = React.useState(false);
   const [breadcrumbs, setBreadcrumbs] = React.useState<BreadcrumbProps['items']>([]);
 
-  React.useEffect(() => {
+  const fetchFiles = React.useCallback(() => {
     setLoading(true);
     getFiles(directoryId).then((res) => {
-      setFiles(res.files); 
+      setFiles(res.files);
       const items = createBreadcrumbItems(res.tree);
       setBreadcrumbs(items);
     }).finally(() => {
-      setLoading(false); 
+      setLoading(false);
     });
   }, [directoryId]);
 
+  React.useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
+
   return (
     <>
-      <HomeMenu directoryId={directoryId}/>
+      <HomeMenu directoryId={directoryId}
+        afterCreate={fetchFiles}
+      />
       <div className={styles.breadcrumb_wrapper}>
         <Breadcrumb className={styles.breadcrumb}
           items={breadcrumbs}

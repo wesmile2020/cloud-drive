@@ -35,10 +35,27 @@ func GenerateJWTToken(userID uint) (string, error) {
 	return token.SignedString([]byte(SECRET_KEY))
 }
 
+func ParseJWTToken(tokenString string) (*Claims, error) {
+	var claims Claims
+	parsedToken, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(SECRET_KEY), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !parsedToken.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+	return &claims, nil
+}
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 从 cookie 中获取 token
-		token, err := ctx.Cookie("token")
+		tokenString, err := ctx.Cookie("token")
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusOK, models.Response{
 				Code:    http.StatusUnauthorized,
@@ -49,18 +66,11 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 解析 token
-		var claims Claims
-		parsedToken, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(SECRET_KEY), nil
-		})
-
-		if err != nil || !parsedToken.Valid {
+		claims, err := ParseJWTToken(tokenString)
+		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusOK, models.Response{
 				Code:    http.StatusUnauthorized,
-				Message: "Invalid token",
+				Message: err.Error(),
 				Data:    nil,
 			})
 			return

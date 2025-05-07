@@ -2,7 +2,7 @@ package services
 
 import (
 	"cloud-drive/internal/models"
-	"errors"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -25,13 +25,13 @@ func (service *UserService) RegisterUser(apiUser *models.APIUser, password strin
 	// 检查phone是否已存在
 	service.DB.Where("phone = ?", apiUser.Phone).Count(&existCount)
 	if existCount > 0 {
-		return errors.New("手机号已被注册")
+		return fmt.Errorf("手机号已被注册")
 	}
 
 	// 检查email是否已存在
 	service.DB.Where("email = ?", apiUser.Email).Count(&existCount)
 	if existCount > 0 {
-		return errors.New("邮箱已被注册")
+		return fmt.Errorf("邮箱已被注册")
 	}
 
 	// 插入用户表
@@ -61,7 +61,7 @@ func (service *UserService) LoginUser(account, password string) (*models.APIUser
 	var existingUser models.DBUser
 	if err := service.DB.Where("phone = ? OR email = ?", account, account).First(&existingUser).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, errors.New("账号或者密码错误")
+			return nil, fmt.Errorf("账号或者密码错误")
 		}
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (service *UserService) LoginUser(account, password string) (*models.APIUser
 
 	// 对比密码
 	if err := bcrypt.CompareHashAndPassword([]byte(dbPassword.Password), []byte(password)); err != nil {
-		return nil, errors.New("账号或者密码错误")
+		return nil, fmt.Errorf("账号或者密码错误")
 	}
 
 	apiUser := existingUser.ToAPIUser()

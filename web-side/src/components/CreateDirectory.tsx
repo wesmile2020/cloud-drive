@@ -6,6 +6,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   directoryId: number;
+  afterCreate?: () => void;
 }
 
 function CreateDirectory(props: Props) {
@@ -15,10 +16,11 @@ function CreateDirectory(props: Props) {
     await createDirectory({
       name: values.directory,
       parentId: Number(props.directoryId),
-      public: values.public
+      public: values.public ?? false
     });
     message.success('创建文件夹成功');
     props.onClose();
+    props.afterCreate?.();
   }
 
   return (
@@ -38,7 +40,7 @@ function CreateDirectory(props: Props) {
         </Form.Item>
         <Form.Item name="public"
           valuePropName='checked'>
-          <Checkbox defaultChecked={false}>
+          <Checkbox>
             是否公开
           </Checkbox>
         </Form.Item>

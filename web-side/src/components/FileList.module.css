@@ -1,0 +1,14 @@
+.file_list {
+  flex: 1;
+  overflow: hidden;
+}
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.avatar {
+  background-color: #f56a00;
+}
