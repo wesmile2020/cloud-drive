@@ -4,7 +4,7 @@ import { message } from 'antd';
 axios.interceptors.response.use(
   (response) => {
     if (response.status === 200 && response.data.code === 200) {
-      return response.data;
+      return response.data.data;
     } else {
       if (response.data.code === 401) {
         throw new Error(response.data.code);
@@ -53,10 +53,33 @@ interface CreateDirectoryParams {
   public: boolean;
 }
 
-export async function createDirectory(params: CreateDirectoryParams) {
+export function createDirectory(params: CreateDirectoryParams) {
   return axios.post('/api/file/directory', params);
 }
 
-export async function getFiles(parentId: string) {
+interface FileItem {
+  user: UserInfo;
+  id: number;
+  name: string;
+  size: number;
+  fileId: string;
+  parentId: number;
+  public: boolean;
+  isDirectory: boolean;
+  timestamp: number;
+}
+
+interface FileTree {
+  id: number;
+  name: string;
+  parent: FileTree | null;
+}
+
+export interface FileTreeResponse {
+  files: FileItem[];
+  tree: FileTree;
+}
+
+export function getFiles(parentId: number): Promise<FileTreeResponse> {
   return axios.get(`/api/file/files/${parentId}`);
 }

@@ -130,6 +130,7 @@ func (controller *UserController) GetUserInfo(ctx *gin.Context) {
 			Data:    nil,
 		}
 		ctx.JSON(http.StatusOK, response)
+		return
 	}
 	response := models.Response{
 		Code:    http.StatusOK,

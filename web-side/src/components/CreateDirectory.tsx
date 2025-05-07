@@ -38,7 +38,7 @@ function CreateDirectory(props: Props) {
         </Form.Item>
         <Form.Item name="public"
           valuePropName='checked'>
-          <Checkbox>
+          <Checkbox defaultChecked={false}>
             是否公开
           </Checkbox>
         </Form.Item>

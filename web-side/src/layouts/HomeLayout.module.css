@@ -1,3 +1,7 @@
 .home_layout {
   height: 100vh;
 }
+
+.layout_context {
+  padding: 10px;
+}

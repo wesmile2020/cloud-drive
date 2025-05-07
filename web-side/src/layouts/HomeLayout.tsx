@@ -47,7 +47,7 @@ function HomeLayout() {
         />
          
       </Layout.Sider>
-      <Layout.Content>
+      <Layout.Content className={styles.layout_content}>
         <Outlet />
       </Layout.Content>
 

@@ -95,10 +95,13 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 		uid = userID.(uint)
 	}
 	files := controller.service.GetFiles(uint(dirId), uid)
+
+	tree := controller.service.GetFileTree(uint(dirId))
+
 	ctx.JSON(http.StatusOK, &models.Response{
 		Code:    http.StatusOK,
 		Message: "",
-		Data:    files,
+		Data:    gin.H{"tree": tree, "files": files},
 	})
 }
 
