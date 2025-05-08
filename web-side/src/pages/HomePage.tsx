@@ -10,7 +10,7 @@ import { FileTreeResponse, getFiles } from '@/services/api';
 
 import styles from './HomePage.module.css';
 
-function createBreadcrumbItems(tree: FileTreeResponse['tree'] | null) {
+function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree'] | null) {
   const result: BreadcrumbProps['items'] = [];
   while (tree) {
     result.unshift({
@@ -23,7 +23,7 @@ function createBreadcrumbItems(tree: FileTreeResponse['tree'] | null) {
     tree = tree.parent;
   }
   result.unshift({
-    title: result.length > 0 ? (
+    title: directoryId !== 0 ? (
       <Link to="/home/0">
         <HomeFilled />
         <span className={styles.text}>首页</span>
@@ -52,7 +52,7 @@ function Home() {
     setLoading(true);
     getFiles(directoryId).then((res) => {
       setFiles(res.files);
-      const items = createBreadcrumbItems(res.tree);
+      const items = createBreadcrumbItems(directoryId, res.tree);
       setBreadcrumbs(items);
     }).finally(() => {
       setLoading(false);

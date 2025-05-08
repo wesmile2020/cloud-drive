@@ -2,6 +2,7 @@ package services
 
 import (
 	"cloud-drive/internal/models"
+	"fmt"
 	"log"
 
 	"gorm.io/gorm"
@@ -22,7 +23,14 @@ func (service *FileService) CreateDirectory(directory *models.APIDirectory) erro
 	if directory.ParentID != 0 {
 		var parentDirectory models.DBDirectory
 		if err := service.DB.Where("id = ?", directory.ParentID).First(&parentDirectory).Error; err == nil {
+			// 判断是否有权限创建文件夹
+			if parentDirectory.UserID != directory.UserID && !parentDirectory.Public {
+				return fmt.Errorf("没有权限创建文件夹")
+			}
+
 			parentPublic = parentDirectory.Public
+		} else {
+			return fmt.Errorf("父文件夹不存在")
 		}
 	}
 

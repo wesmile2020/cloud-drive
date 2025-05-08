@@ -55,8 +55,8 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 	if err := controller.service.CreateDirectory(directory); err != nil {
 		ctx.JSON(http.StatusOK, &models.Response{
 			Code:    http.StatusInternalServerError,
-			Message: "Failed to create directory",
-			Data:    err.Error(),
+			Message: err.Error(),
+			Data:    nil,
 		})
 		return
 	}

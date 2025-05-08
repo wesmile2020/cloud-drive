@@ -1,0 +1,74 @@
+.avatar_container {
+    display: flex;
+    align-items: center;
+    background-color: #fff; /* 设置背景颜色 */
+    padding: 20px 0;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  :global(.ant-layout-sider-collapsed) .avatar_container {
+    justify-content: center;
+  }
+  
+  .avatar_container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 2%;
+    display: block;
+    width: 96%;
+    height: 2px;
+    background-color: #efefef
+  }
+  
+  
+  .logo {
+    width: 35px; /* 设置头像的宽度 */
+    height: 35px; /* 设置头像的高度 */
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  
+  .logo img {
+    width: 100%; /* 使头像图片填充容器 */
+    height: 100%; /* 使头像图片填充容器 */
+  }
+  
+  :global(.ant-layout-sider-collapsed) .user_info {
+    display: none;
+  }
+  
+  :global(.ant-layout-sider-collapsed) .login_button {
+    display: none;
+  }
+  
+  .user_name {
+    color: #1677ff;
+    font-size: 14px;
+    max-width: 110px;
+    display: flex;
+    cursor: pointer;
+  }
+  
+  .name {
+    margin-right: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .user_email {
+    font-size: 12px;
+    font-weight: 400;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 5px;
+  }
+  
+  .email_icon {
+    margin-right: 5px;
+  }
+  

@@ -6,6 +6,7 @@ import { FileTreeResponse } from '@/services/api';
 
 import styles from './FileList.module.css';
 import { formatSize } from '@/utils/utils';
+import { FileFilled, FolderFilled } from '@ant-design/icons';
 
 interface Props {
   files: FileTreeResponse['files'];
@@ -23,9 +24,17 @@ function FileList(props: Props) {
       dataIndex: 'name',
       render(name: string, record) {
         if (record.isDirectory) {
-          return <Link to={`/home/${record.id}`}>{name}</Link>;
+          return (
+            <Link to={`/home/${record.id}`}>
+              <FolderFilled /> {name}
+            </Link>
+          );
         } else {
-          return name;
+          return (
+            <>
+              <FileFilled /> {name}
+            </>
+          );
         }
       }
     },
@@ -41,7 +50,8 @@ function FileList(props: Props) {
       dataIndex: 'user',
       render(user: FileTreeResponse['files'][0]['user']) {
         return (
-          <Avatar className={styles.avatar}>
+          <Avatar className={styles.avatar}
+            size="small">
             {user.name.slice(0, 1)}
           </Avatar>
         );
