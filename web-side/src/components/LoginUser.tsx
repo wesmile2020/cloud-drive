@@ -1,22 +1,27 @@
 import { Button,Dropdown, MenuProps } from 'antd';
 import { DownOutlined, LogoutOutlined, MailOutlined } from '@ant-design/icons';
 
-import styles from './UserAvatar.module.css';
+import styles from './LoginUser.module.css';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { logout } from '@/services/api';
+import { useNavigate } from 'react-router';
 
-const items: MenuProps['items'] = [
-  {
-    key: '1',
-    label: '注销',
-    icon: <LogoutOutlined />,
-    onClick() {
-      location.reload();
-    }
-  },
-]
-
-function UserAvatar() {
+function LoginUser() {
   const [userInfo, fetchUserOrLogin] = useUserInfo();
+  const navigate = useNavigate();
+
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      label: '注销',
+      icon: <LogoutOutlined />,
+      onClick() {
+        logout().then(() => {
+          navigate('/login');
+        });
+      }
+    },
+  ];
 
   return (
     <div className={styles.avatar_container}>
@@ -52,4 +57,4 @@ function UserAvatar() {
   );
 }
 
-export default UserAvatar;
+export default LoginUser;

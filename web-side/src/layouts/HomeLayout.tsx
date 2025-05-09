@@ -3,7 +3,7 @@ import { Outlet } from 'react-router';
 import React from 'react';
 import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
-import UserAvatar from '@/components/UserAvatar';
+import LoginUser from '@/components/LoginUser';
 
 import styles from './HomeLayout.module.css';
 
@@ -41,7 +41,7 @@ function HomeLayout() {
     <Layout className={styles.home_layout}>
       <Layout.Sider theme='light'
         collapsible>
-        <UserAvatar />
+        <LoginUser />
         <Menu theme='light'
           mode='inline'
           items={menus}

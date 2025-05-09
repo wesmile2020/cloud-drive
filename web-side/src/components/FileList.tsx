@@ -1,22 +1,30 @@
 import React from 'react';
-import { Avatar, Table, TableColumnType } from 'antd';
+import { Avatar, Table, TableColumnType, Tag } from 'antd';
 import { format } from 'date-fns';
 import { Link } from 'react-router';
-import { FileTreeResponse } from '@/services/api';
+import { FileTreeResponse, Permission } from '@/services/api';
 
 import styles from './FileList.module.css';
 import { formatSize } from '@/utils/utils';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
+import { useUserInfo } from '@/hooks/useUserInfo';
 
 interface Props {
   files: FileTreeResponse['files'];
   loading: boolean;
 }
 
+const PermissionText = {
+  [Permission.private]: '私有',
+  [Permission.inherit]: '继承',
+  [Permission.public]: '公开',
+};
+
 function FileList(props: Props) {
   const { files, loading } = props;
   const domRef = React.useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = React.useState(0);
+  const [userInfo] = useUserInfo();
 
   const columns: TableColumnType<FileTreeResponse['files'][0]>[] = [
     {
@@ -69,9 +77,16 @@ function FileList(props: Props) {
     },
     {
       title: '标签',
-      dataIndex: 'public',
-      render: (publicFlag: boolean) => {
-        return publicFlag ? '公开' : '私密';
+      dataIndex: 'permission',
+      render: (permission: Permission, record) => {
+        return (
+          <>
+            <Tag color={record.public ? 'green' : 'gold'}>
+              {PermissionText[permission]}
+            </Tag>
+            {userInfo?.id === record.user.id && <Tag color='blue'>自有</Tag>}
+          </>
+        );
       }
     }
   ];

@@ -5,6 +5,7 @@ import (
 	"cloud-drive/internal/services"
 	"cloud-drive/middleware"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -93,12 +94,24 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
-			Message: "生成token失败",
+			Message: "generate token failed",
 			Data:    nil,
 		}
 		ctx.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 将token存入数据库中
+	expiredAt := time.Now().Add(middleware.Duration).Unix()
+	if err := controller.service.SaveToken(tokenString, apiUser.ID, expiredAt); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "save token failed",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+	}
+
 	// token 有效期是一周，设置cookie
 	ctx.SetCookie("token", tokenString, int(middleware.Duration*3600), "/", "", false, true)
 
@@ -106,6 +119,38 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 		Code:    http.StatusOK,
 		Message: "登录成功",
 		Data:    apiUser,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) Logout(ctx *gin.Context) {
+	tokenString, err := ctx.Cookie("token")
+	if err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "get token failed",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	if err := controller.service.Logout(tokenString); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "logout failed",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	ctx.SetCookie("token", "", -1, "/", "", false, true)
+
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "退出登录成功",
+		Data:    nil,
 	}
 	ctx.JSON(http.StatusOK, response)
 }
@@ -145,9 +190,10 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		userGroup.POST("/register", controller.RegisterUser)
 		userGroup.POST("/login", controller.LoginUser)
+		userGroup.POST("/logout", controller.Logout)
 	}
 	// 验证token的中间件
-	authGroup := router.Group("/user", middleware.AuthMiddleware())
+	authGroup := router.Group("/user", middleware.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.GET("/info", controller.GetUserInfo)
 	}

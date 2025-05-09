@@ -23,13 +23,13 @@ func NewUserService(db *gorm.DB) *UserService {
 func (service *UserService) RegisterUser(apiUser *models.APIUser, password string) error {
 	var existCount int64 = 0
 	// 检查phone是否已存在
-	service.DB.Where("phone = ?", apiUser.Phone).Count(&existCount)
+	service.DB.Table("user").Where("phone = ?", apiUser.Phone).Count(&existCount)
 	if existCount > 0 {
 		return fmt.Errorf("手机号已被注册")
 	}
 
 	// 检查email是否已存在
-	service.DB.Where("email = ?", apiUser.Email).Count(&existCount)
+	service.DB.Table("user").Where("email = ?", apiUser.Email).Count(&existCount)
 	if existCount > 0 {
 		return fmt.Errorf("邮箱已被注册")
 	}
@@ -80,6 +80,19 @@ func (service *UserService) LoginUser(account, password string) (*models.APIUser
 	apiUser := existingUser.ToAPIUser()
 
 	return &apiUser, nil
+}
+
+func (service *UserService) SaveToken(tokenString string, userID uint, expiredAt int64) error {
+	dbToken := models.DBToken{
+		Token:     tokenString,
+		UserID:    userID,
+		ExpiredAt: expiredAt,
+	}
+	return service.DB.Create(&dbToken).Error
+}
+
+func (service *UserService) Logout(tokenString string) error {
+	return service.DB.Unscoped().Delete(&models.DBToken{}, "token =?", tokenString).Error
 }
 
 // 获取用户登录信息

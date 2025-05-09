@@ -36,6 +36,10 @@ export function login(account: string, password: string) {
   return axios.post('/api/user/login', { account, password });
 }
 
+export function logout() {
+  return axios.post('/api/user/logout');
+}
+
 export interface UserInfo {
   id: number;
   name: string;
@@ -47,10 +51,16 @@ export function getUserInfo(): Promise<UserInfo> {
   return axios.get('/api/user/info');
 }
 
+export const enum Permission {
+  private = 0,
+  inherit = 1,
+  public = 2,
+}
+
 interface CreateDirectoryParams {
   name: string;
   parentId: number; 
-  public: boolean;
+  permission: Permission;
 }
 
 export function createDirectory(params: CreateDirectoryParams) {
@@ -64,6 +74,7 @@ interface FileItem {
   size: number;
   fileId: string;
   parentId: number;
+  permission: Permission;
   public: boolean;
   isDirectory: boolean;
   timestamp: number;

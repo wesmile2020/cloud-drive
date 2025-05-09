@@ -46,10 +46,10 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 		})
 	}
 	directory := &models.APIDirectory{
-		UserID:   userID.(uint),
-		Name:     request.Name,
-		ParentID: *request.ParentID,
-		Public:   *request.Public,
+		UserID:     userID.(uint),
+		Name:       request.Name,
+		ParentID:   *request.ParentID,
+		Permission: *request.Permission,
 	}
 
 	if err := controller.service.CreateDirectory(directory); err != nil {
@@ -92,7 +92,7 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 	var uid uint = 0
 	tokenString, err := ctx.Cookie("token")
 	if err == nil {
-		claims, err := middleware.ParseJWTToken(tokenString)
+		claims, err := middleware.ParseJWTToken(tokenString, controller.service.DB)
 		if err == nil {
 			uid = claims.UserID
 		}
@@ -115,7 +115,7 @@ func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
 		fileGroup.GET("/:directoryID", controller.GetFiles)
 	}
 
-	authGroup := router.Group("/file", middleware.AuthMiddleware())
+	authGroup := router.Group("/file", middleware.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
 	}

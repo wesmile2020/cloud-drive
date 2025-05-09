@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"time"
 
@@ -35,7 +36,14 @@ func GenerateJWTToken(userID uint) (string, error) {
 	return token.SignedString([]byte(SECRET_KEY))
 }
 
-func ParseJWTToken(tokenString string) (*Claims, error) {
+func ParseJWTToken(tokenString string, db *gorm.DB) (*Claims, error) {
+	// 判断 token 是否在token表中
+	var count int64 = 0
+	db.Table("token").Where("token = ?", tokenString).Count(&count)
+	if count == 0 {
+		return nil, fmt.Errorf("token is out of work")
+	}
+
 	var claims Claims
 	parsedToken, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -52,7 +60,7 @@ func ParseJWTToken(tokenString string) (*Claims, error) {
 	return &claims, nil
 }
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 从 cookie 中获取 token
 		tokenString, err := ctx.Cookie("token")
@@ -66,7 +74,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 解析 token
-		claims, err := ParseJWTToken(tokenString)
+		claims, err := ParseJWTToken(tokenString, db)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusOK, models.Response{
 				Code:    http.StatusUnauthorized,

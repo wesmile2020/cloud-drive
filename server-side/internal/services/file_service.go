@@ -18,13 +18,13 @@ func NewFileService(db *gorm.DB, rootDir string) *FileService {
 }
 
 func (service *FileService) CreateDirectory(directory *models.APIDirectory) error {
-	parentPublic := false
+	parentPublic := true
 
 	if directory.ParentID != 0 {
 		var parentDirectory models.DBDirectory
 		if err := service.DB.Where("id = ?", directory.ParentID).First(&parentDirectory).Error; err == nil {
 			// 判断是否有权限创建文件夹
-			if parentDirectory.UserID != directory.UserID && !parentDirectory.Public {
+			if parentDirectory.UserID != directory.UserID {
 				return fmt.Errorf("没有权限创建文件夹")
 			}
 
@@ -34,7 +34,7 @@ func (service *FileService) CreateDirectory(directory *models.APIDirectory) erro
 		}
 	}
 
-	dbDirectory := directory.ToDBDirectory()
+	dbDirectory := directory.ToDBDirectory(parentPublic)
 	dbDirectory.ParentPublic = parentPublic
 	return service.DB.Create(dbDirectory).Error
 }
@@ -63,22 +63,21 @@ func (service *FileService) GetFiles(directoryID uint, userID uint) []*models.AP
 	var files []*models.APIFile = []*models.APIFile{}
 
 	// 处理共享的文件夹
+	if err := service.DB.Preload("User").Where("parent_id = ? AND public = ? AND user_id != ?", directoryID, true, userID).Find(&dbDirectories).Error; err == nil {
+		for _, dbDirectory := range dbDirectories {
+			files = append(files, dbDirectory.ToAPIFile())
+		}
+	} else {
+		log.Printf("Error querying public directories: %v", err)
+	}
 	if directoryID == 0 {
+		// 处理父文件夹是私有但是子文件夹是公开的情况
 		if err := service.DB.Preload("User").Where("public = ? and parent_public = ? and user_id != ?", true, false, userID).Find(&dbDirectories).Error; err == nil {
 			for _, dbDirectory := range dbDirectories {
 				files = append(files, dbDirectory.ToAPIFile())
 			}
 		} else {
 			log.Printf("Error querying root public directories: %v", err)
-		}
-	} else {
-		// 处理当前文件夹下的共享文件夹
-		if err := service.DB.Preload("User").Where("parent_id = ? AND public = ? AND user_id != ?", directoryID, true, userID).Find(&dbDirectories).Error; err == nil {
-			for _, dbDirectory := range dbDirectories {
-				files = append(files, dbDirectory.ToAPIFile())
-			}
-		} else {
-			log.Printf("Error querying public directories: %v", err)
 		}
 	}
 
