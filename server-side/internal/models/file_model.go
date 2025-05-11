@@ -7,9 +7,12 @@ import (
 )
 
 type APIFileTree struct {
-	ID     uint         `json:"id"`     // 文件ID
-	Name   string       `json:"name"`   // 文件名称
-	Parent *APIFileTree `json:"parent"` // 父文件
+	ID         uint         `json:"id"`         // 文件ID
+	UserID     uint         `json:"userId"`     // 用户ID
+	Name       string       `json:"name"`       // 文件名称
+	Public     bool         `json:"public"`     // 是否公开
+	Permission uint         `json:"permission"` // 权限 0:私有 1:继承父目录的权限 2:公开
+	Parent     *APIFileTree `json:"parent"`     // 父文件
 }
 
 type APIFile struct {

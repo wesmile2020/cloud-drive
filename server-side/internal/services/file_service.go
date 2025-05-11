@@ -49,7 +49,10 @@ func (service *FileService) GetFileTree(directoryID uint, userID uint) *models.A
 	if err := service.DB.Where("id = ? and (user_id = ? or public = ?)", directoryID, userID, true).First(&dbDirectory).Error; err == nil {
 		tree = &models.APIFileTree{}
 		tree.ID = dbDirectory.ID
+		tree.UserID = dbDirectory.UserID
 		tree.Name = dbDirectory.Name
+		tree.Public = dbDirectory.Public
+		tree.Permission = dbDirectory.Permission
 		if dbDirectory.ParentID != 0 {
 			tree.Parent = service.GetFileTree(dbDirectory.ParentID, userID)
 		}

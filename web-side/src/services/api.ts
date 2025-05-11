@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { message } from 'antd';
+import { Permission } from '@/config/enums';
 
 axios.interceptors.response.use(
   (response) => {
@@ -51,12 +52,6 @@ export function getUserInfo(): Promise<UserInfo> {
   return axios.get('/api/user/info');
 }
 
-export const enum Permission {
-  private = 0,
-  inherit = 1,
-  public = 2,
-}
-
 interface CreateDirectoryParams {
   name: string;
   parentId: number; 
@@ -82,7 +77,10 @@ interface FileItem {
 
 interface FileTree {
   id: number;
+  userId: number;
   name: string;
+  public: boolean;
+  permission: Permission;
   parent: FileTree | null;
 }
 

@@ -9,6 +9,16 @@ import FileList from '@/components/FileList';
 import { FileTreeResponse, getFiles } from '@/services/api';
 
 import styles from './HomePage.module.css';
+import { Permission } from '@/config/enums';
+
+const homeTree: FileTreeResponse['tree'] = {
+  id: 0,
+  userId: 0,
+  name: '首页',
+  parent: null,
+  public: true,
+  permission: Permission.public, 
+};
 
 function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree'] | null) {
   const result: BreadcrumbProps['items'] = [];
@@ -45,6 +55,7 @@ function Home() {
     return Number(params.id);
   }, [params.id]);
   const [files, setFiles] = React.useState<FileTreeResponse['files']>([]);
+  const [fileTree, setFileTree] = React.useState<FileTreeResponse['tree'] | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [breadcrumbs, setBreadcrumbs] = React.useState<BreadcrumbProps['items']>([]);
 
@@ -54,6 +65,11 @@ function Home() {
       setFiles(res.files);
       const items = createBreadcrumbItems(directoryId, res.tree);
       setBreadcrumbs(items);
+      if (directoryId === 0) {
+        setFileTree(homeTree)
+      } else {
+        setFileTree(res.tree);
+      }
     }).finally(() => {
       setLoading(false);
     });
@@ -65,7 +81,7 @@ function Home() {
 
   return (
     <>
-      <HomeMenu directoryId={directoryId}
+      <HomeMenu directoryTree={fileTree}
         afterCreate={fetchFiles}
       />
       <div className={styles.breadcrumb_wrapper}>

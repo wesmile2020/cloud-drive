@@ -3,18 +3,25 @@ import { FolderAddOutlined, MoreOutlined } from '@ant-design/icons';
 import { FloatButton, message } from 'antd';
 import CreateDirectory from './CreateDirectory';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { FileTreeResponse } from '@/services/api';
 
 interface Props {
-  directoryId: number;
+  directoryTree: FileTreeResponse['tree'] | null;
   afterCreate?: () => void;
 }
 
 function HomeMenu(props: Props) {
+  const { directoryTree } = props;
+
   const [open, setOpen] = React.useState(false);
   const [userInfo] = useUserInfo();
   async function triggerCreateDirectory() {
     if (!userInfo) {
       message.error('请先登录');
+      return; 
+    }
+    if (!directoryTree || (directoryTree.id !== 0 && directoryTree.userId !== userInfo.id)) {
+      message.error('您不能在该目录下新建文件夹');
       return; 
     }
     setOpen(true);
@@ -32,7 +39,7 @@ function HomeMenu(props: Props) {
         />
       </FloatButton.Group>
       <CreateDirectory open={open}
-        directoryId={props.directoryId}
+        directoryTree={props.directoryTree}
         afterCreate={props.afterCreate}
         onClose={() => setOpen(false)}/>
     </>

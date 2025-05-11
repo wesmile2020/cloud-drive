@@ -2,12 +2,13 @@ import React from 'react';
 import { Avatar, Table, TableColumnType, Tag } from 'antd';
 import { format } from 'date-fns';
 import { Link } from 'react-router';
-import { FileTreeResponse, Permission } from '@/services/api';
+import { FileTreeResponse } from '@/services/api';
 
 import styles from './FileList.module.css';
 import { formatSize } from '@/utils/utils';
 import { FileFilled, FolderFilled } from '@ant-design/icons';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { Permission } from '@/config/enums';
 
 interface Props {
   files: FileTreeResponse['files'];

@@ -63,7 +63,7 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, &models.Response{
 		Code:    http.StatusOK,
-		Message: "Directory created successfully",
+		Message: "",
 		Data:    nil,
 	})
 }
