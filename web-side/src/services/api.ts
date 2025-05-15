@@ -62,6 +62,15 @@ export function createDirectory(params: CreateDirectoryParams) {
   return axios.post('/api/file/directory', params);
 }
 
+interface UpdateDirectoryParams {
+  name: string;
+  permission: Permission;
+}
+
+export function updateDirectory(id: number, params: UpdateDirectoryParams) {
+  return axios.put(`/api/file/directory/${id}`, params); 
+}
+
 interface FileItem {
   user: UserInfo;
   id: number;
@@ -86,7 +95,7 @@ interface FileTree {
 
 export interface FileTreeResponse {
   files: FileItem[];
-  tree: FileTree;
+  tree: FileTree | null;
 }
 
 export function getFiles(parentId: number): Promise<FileTreeResponse> {

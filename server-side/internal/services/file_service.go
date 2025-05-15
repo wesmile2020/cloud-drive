@@ -2,6 +2,7 @@ package services
 
 import (
 	"cloud-drive/internal/models"
+	"cloud-drive/permissions"
 	"fmt"
 	"log"
 
@@ -37,6 +38,45 @@ func (service *FileService) CreateDirectory(directory *models.APIDirectory) erro
 	dbDirectory := directory.ToDBDirectory(parentPublic)
 	dbDirectory.ParentPublic = parentPublic
 	return service.DB.Create(dbDirectory).Error
+}
+
+func (service *FileService) UpdateDirectory(directoryID uint, directory *models.APIDirectory) error {
+	var dbDirectory models.DBDirectory
+	if err := service.DB.Where("id = ?", directoryID).First(&dbDirectory).Error; err != nil {
+		return fmt.Errorf("文件夹不存在")
+	}
+	if dbDirectory.UserID != directory.UserID {
+		return fmt.Errorf("没有权限更新文件夹")
+	}
+
+	parentPublic := true
+	if dbDirectory.ParentID != 0 {
+		var parentDirectory models.DBDirectory
+		if err := service.DB.Where("id = ?", dbDirectory.ParentID).First(&parentDirectory).Error; err == nil {
+			parentPublic = parentDirectory.Public
+		}
+	}
+	dbDirectory.Permission = directory.Permission
+	dbDirectory.Name = directory.Name
+	dbDirectory.Public = permissions.CalculatePublic(parentPublic, directory.Permission)
+	if err := service.DB.Save(&dbDirectory).Error; err != nil {
+		return err
+	}
+
+	// 更新所有子文件夹的权限
+	var updateChildError error = nil
+	var childDirectories []models.DBDirectory
+	if err := service.DB.Where("parent_id = ?", directoryID).Find(&childDirectories).Error; err == nil {
+		for _, childDirectory := range childDirectories {
+			childDirectory.Public = permissions.CalculatePublic(dbDirectory.Public, childDirectory.Permission)
+			childDirectory.ParentPublic = dbDirectory.Public
+			if err := service.DB.Save(&childDirectory).Error; err != nil {
+				updateChildError = err
+			}
+		}
+	}
+
+	return updateChildError
 }
 
 func (service *FileService) DeleteDirectory(directoryID uint) error {

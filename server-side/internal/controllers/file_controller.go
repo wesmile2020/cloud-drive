@@ -68,6 +68,69 @@ func (controller *FileController) CreateDirectory(ctx *gin.Context) {
 	})
 }
 
+func (controller *FileController) UpdateDirectory(ctx *gin.Context) {
+	// Implement the logic to update a directory
+	var request models.UpdateDirectoryRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+	}
+	directoryID := ctx.Param("directoryID")
+	if directoryID == "" {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Directory ID is required",
+			Data:    nil,
+		})
+		return
+	}
+	dirId, err := strconv.ParseUint(directoryID, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid directory ID",
+			Data:    nil,
+		})
+		return
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user ID",
+			Data:    nil,
+		})
+	}
+	directory := &models.APIDirectory{
+		UserID:     userID.(uint),
+		Name:       request.Name,
+		Permission: *request.Permission,
+	}
+
+	if err := controller.service.UpdateDirectory(uint(dirId), directory); err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    nil,
+	})
+}
+
 func (controller *FileController) GetFiles(ctx *gin.Context) {
 	directoryID := ctx.Param("directoryID")
 	if directoryID == "" {
@@ -118,5 +181,6 @@ func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
 	authGroup := router.Group("/file", middleware.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
+		authGroup.PUT("/directory/:directoryID", controller.UpdateDirectory)
 	}
 }

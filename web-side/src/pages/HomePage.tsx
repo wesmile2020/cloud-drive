@@ -20,7 +20,7 @@ const homeTree: FileTreeResponse['tree'] = {
   permission: Permission.public, 
 };
 
-function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree'] | null) {
+function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree']) {
   const result: BreadcrumbProps['items'] = [];
   while (tree) {
     result.unshift({
@@ -55,7 +55,7 @@ function Home() {
     return Number(params.id);
   }, [params.id]);
   const [files, setFiles] = React.useState<FileTreeResponse['files']>([]);
-  const [fileTree, setFileTree] = React.useState<FileTreeResponse['tree'] | null>(null);
+  const [fileTree, setFileTree] = React.useState<FileTreeResponse['tree']>(null);
   const [loading, setLoading] = React.useState(false);
   const [breadcrumbs, setBreadcrumbs] = React.useState<BreadcrumbProps['items']>([]);
 
@@ -63,13 +63,14 @@ function Home() {
     setLoading(true);
     getFiles(directoryId).then((res) => {
       setFiles(res.files);
-      const items = createBreadcrumbItems(directoryId, res.tree);
-      setBreadcrumbs(items);
       if (directoryId === 0) {
         setFileTree(homeTree)
       } else {
         setFileTree(res.tree);
       }
+      const items = createBreadcrumbItems(directoryId, res.tree);
+      setBreadcrumbs(items);
+    
     }).finally(() => {
       setLoading(false);
     });
@@ -90,7 +91,9 @@ function Home() {
         />
       </div>
       <FileList files={files}
+        directoryTree={fileTree}
         loading={loading}
+        afterUpdate={fetchFiles}
       />
     </> 
   );

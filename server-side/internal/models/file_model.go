@@ -96,3 +96,8 @@ type CreateDirectoryRequest struct {
 	ParentID   *uint  `json:"parentId" binding:"required"`   // 父文件夹ID
 	Permission *uint  `json:"permission" binding:"required"` // 权限 0:私有 1:继承父目录的权限 2:公开
 }
+
+type UpdateDirectoryRequest struct {
+	Name       string `json:"name" binding:"required"`       // 文件夹名称
+	Permission *uint  `json:"permission" binding:"required"` // 权限 0:私有 1:继承父目录的权限 2:公开
+}

@@ -1,39 +1,36 @@
 import { message } from 'antd';
-import { FileTreeResponse, createDirectory } from '@/services/api';
+import { FileTreeResponse, updateDirectory } from '@/services/api';
 import BaseDirectory, { FormValues } from './BaseDirectory';
 
 interface Props {
+  id: number;
   open: boolean;
   onClose: () => void;
+  values: FormValues;
   directoryTree: FileTreeResponse['tree'];
-  afterCreate?: () => void;
+  afterUpdate?: () => void;
 }
 
-function CreateDirectory(props: Props) {
+function UpdateDirectory(props: Props) {
   async function onFinish(values: FormValues) {
-    if (!props.directoryTree) {
-      message.error('请先选择一个目录');
-      return;
-    }
-  
-    await createDirectory({
+    await updateDirectory(props.id, {
       name: values.directory,
-      parentId: Number(props.directoryTree.id),
       permission: values.permission,
     });
-    message.success('创建文件夹成功');
+    message.success('修改文件夹成功');
     props.onClose();
-    props.afterCreate?.();
+    props.afterUpdate?.();
   }
 
   return (
-    <BaseDirectory title="新建文件夹"
+    <BaseDirectory title="修改文件夹"
       open={props.open}
       onClose={props.onClose}
       directoryTree={props.directoryTree}
       onFinish={onFinish}
+      values={props.values}
     />
   );
 }
 
-export default CreateDirectory;
+export default UpdateDirectory;

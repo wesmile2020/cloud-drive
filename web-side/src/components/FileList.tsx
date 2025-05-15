@@ -1,18 +1,21 @@
 import React from 'react';
-import { Avatar, Table, TableColumnType, Tag } from 'antd';
+import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps } from 'antd';
+import { EditOutlined, FileFilled, FolderFilled, MoreOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { Link } from 'react-router';
 import { FileTreeResponse } from '@/services/api';
-
-import styles from './FileList.module.css';
 import { formatSize } from '@/utils/utils';
-import { FileFilled, FolderFilled } from '@ant-design/icons';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { Permission } from '@/config/enums';
+import UpdateDirectory from './UpdateDirectory';
+
+import styles from './FileList.module.css';
 
 interface Props {
   files: FileTreeResponse['files'];
+  directoryTree: FileTreeResponse['tree'];
   loading: boolean;
+  afterUpdate?: () => void;
 }
 
 const PermissionText = {
@@ -26,6 +29,27 @@ function FileList(props: Props) {
   const domRef = React.useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = React.useState(0);
   const [userInfo] = useUserInfo();
+  const [operateRecord, setOperateRecord] = React.useState<FileTreeResponse['files'][0] | null>(null);
+
+  function getOperates(record: FileTreeResponse['files'][0]): MenuProps['items'] {
+    if (record.isDirectory) {
+      return [
+        {
+          key: '1',
+          label: '编辑',
+          icon: <EditOutlined />,
+          disabled: userInfo?.id !== record.user.id,
+          onClick: () => {
+            setOperateRecord(record);
+          }
+        }
+      ];
+    } else {
+      return [
+
+      ];
+    }
+  }
 
   const columns: TableColumnType<FileTreeResponse['files'][0]>[] = [
     {
@@ -89,6 +113,22 @@ function FileList(props: Props) {
           </>
         );
       }
+    },
+    {
+      title: '操作',
+      dataIndex: 'id',
+      render: (_: number, record) => {
+        return (
+          <Dropdown menu={{ items: getOperates(record)}}
+            trigger={['click']}
+            disabled={record.isDirectory && record.user.id !== userInfo?.id}>
+            <Button shape='circle'
+              icon={<MoreOutlined />}
+              type='primary'
+            />
+          </Dropdown>
+        );
+      }
     }
   ];
 
@@ -108,7 +148,7 @@ function FileList(props: Props) {
     return () => {
       window.removeEventListener('resize', initScroll)
     };
-  }, [])
+  }, []);
 
   return (
     <div className={styles.file_list}
@@ -122,8 +162,22 @@ function FileList(props: Props) {
         scroll={{ y: scrollY }}
         virtual={true}
       />
+      {
+        operateRecord && (
+          <UpdateDirectory id={operateRecord.id}
+            open={Boolean(operateRecord)}
+            directoryTree={props.directoryTree}
+            onClose={() => setOperateRecord(null)}
+            values={{
+              directory: operateRecord.name,
+              permission: operateRecord.permission,
+            }}
+            afterUpdate={props.afterUpdate}
+          />
+        )
+      }
+      
     </div>
-    
   );
 }
 

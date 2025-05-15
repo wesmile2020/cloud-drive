@@ -6,7 +6,7 @@ import { useUserInfo } from '@/hooks/useUserInfo';
 import { FileTreeResponse } from '@/services/api';
 
 interface Props {
-  directoryTree: FileTreeResponse['tree'] | null;
+  directoryTree: FileTreeResponse['tree'];
   afterCreate?: () => void;
 }
 
@@ -29,7 +29,7 @@ function HomeMenu(props: Props) {
 
   return (
     <>
-      <FloatButton.Group trigger='hover'
+      <FloatButton.Group trigger='click'
         type='primary'
         icon={<MoreOutlined />}>
         <FloatButton type='primary'
@@ -41,7 +41,8 @@ function HomeMenu(props: Props) {
       <CreateDirectory open={open}
         directoryTree={props.directoryTree}
         afterCreate={props.afterCreate}
-        onClose={() => setOpen(false)}/>
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }
