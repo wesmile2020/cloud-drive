@@ -1,6 +1,6 @@
 import React from 'react';
-import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps } from 'antd';
-import { EditOutlined, FileFilled, FolderFilled, MoreOutlined } from '@ant-design/icons';
+import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps, Popconfirm } from 'antd';
+import { DeleteOutlined, EditOutlined, FileFilled, FolderFilled, MoreOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { Link } from 'react-router';
 import { FileTreeResponse } from '@/services/api';
@@ -41,6 +41,19 @@ function FileList(props: Props) {
           disabled: userInfo?.id !== record.user.id,
           onClick: () => {
             setOperateRecord(record);
+          }
+        },
+        {
+          key: '2',
+          label: (
+            <Popconfirm title="确认删除？">
+              删除
+            </Popconfirm>
+          ),
+          icon: <DeleteOutlined />,
+          disabled: userInfo?.id !== record.user.id,
+          onClick: () => {
+            console.log('删除', record);  
           }
         }
       ];

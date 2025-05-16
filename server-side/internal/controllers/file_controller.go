@@ -131,6 +131,52 @@ func (controller *FileController) UpdateDirectory(ctx *gin.Context) {
 	})
 }
 
+func (controller *FileController) DeleteDirectory(ctx *gin.Context) {
+	// Implement the logic to delete a directory
+	directoryID := ctx.Param("directoryID")
+	if directoryID == "" {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Directory ID is required",
+			Data:    nil,
+		})
+		return
+	}
+	dirId, err := strconv.ParseUint(directoryID, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid directory ID",
+			Data:    nil,
+		})
+		return
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	if err := controller.service.DeleteDirectory(uint(dirId), userID.(uint)); err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    nil,
+	})
+}
+
 func (controller *FileController) GetFiles(ctx *gin.Context) {
 	directoryID := ctx.Param("directoryID")
 	if directoryID == "" {
@@ -182,5 +228,6 @@ func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
 		authGroup.PUT("/directory/:directoryID", controller.UpdateDirectory)
+		authGroup.DELETE("/directory/:directoryID", controller.DeleteDirectory)
 	}
 }

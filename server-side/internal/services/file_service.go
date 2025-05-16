@@ -3,8 +3,10 @@ package services
 import (
 	"cloud-drive/internal/models"
 	"cloud-drive/permissions"
+	"cloud-drive/utils"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"gorm.io/gorm"
 )
@@ -12,10 +14,26 @@ import (
 type FileService struct {
 	DB      *gorm.DB
 	rootDir string
+	fileDir string
+	tempDir string
 }
 
 func NewFileService(db *gorm.DB, rootDir string) *FileService {
-	return &FileService{DB: db, rootDir: rootDir}
+	fileDir := filepath.Join(rootDir, ".cloud_drive_files")
+	tempDir := filepath.Join(fileDir, "temp")
+	if err := utils.CreateDir(fileDir); err != nil {
+		log.Fatalf("Failed to create file directory: %v", err)
+	}
+	if err := utils.CreateDir(tempDir); err != nil {
+		log.Fatalf("Failed to create temp directory: %v", err)
+	}
+
+	return &FileService{
+		DB:      db,
+		rootDir: rootDir,
+		fileDir: fileDir,
+		tempDir: tempDir,
+	}
 }
 
 func (service *FileService) CreateDirectory(directory *models.APIDirectory) error {
@@ -79,7 +97,48 @@ func (service *FileService) UpdateDirectory(directoryID uint, directory *models.
 	return updateChildError
 }
 
-func (service *FileService) DeleteDirectory(directoryID uint) error {
+func (service *FileService) DeleteDirectory(directoryID uint, userID uint) error {
+	var dbDirectory models.DBDirectory
+	if err := service.DB.Where("id = ?", directoryID).First(&dbDirectory).Error; err != nil {
+		return fmt.Errorf("文件夹不存在")
+	}
+	if dbDirectory.UserID != userID {
+		return fmt.Errorf("没有权限删除文件夹")
+	}
+
+	// 删除所有子文件
+	var deleteFileError error = nil
+	var dbFiles []models.DBFile
+	if err := service.DB.Where("parent_id =?", directoryID).Find(&dbFiles).Error; err == nil {
+		for _, dbFile := range dbFiles {
+			// 删除文件
+			filePath := filepath.Join(service.fileDir, dbFile.FileID)
+			if err := utils.RemoveFile(filePath); err != nil {
+				deleteFileError = err
+			}
+			if err := service.DB.Delete(&dbFile).Error; err != nil {
+				deleteFileError = err
+			}
+		}
+	}
+	if deleteFileError != nil {
+		return deleteFileError
+	}
+
+	// 删除所有子文件夹
+	var deleteDirectoryError error = nil
+	var childDirectories []models.DBDirectory
+	if err := service.DB.Where("parent_id = ?", directoryID).Find(&childDirectories).Error; err == nil {
+		for _, childDirectory := range childDirectories {
+			if err := service.DeleteDirectory(childDirectory.ID, userID); err != nil {
+				deleteDirectoryError = err
+			}
+		}
+	}
+	if deleteDirectoryError != nil {
+		return deleteDirectoryError
+	}
+
 	return nil
 }
 

@@ -71,6 +71,10 @@ export function updateDirectory(id: number, params: UpdateDirectoryParams) {
   return axios.put(`/api/file/directory/${id}`, params); 
 }
 
+export function deleteDirectory(id: number) {
+  return axios.delete(`/api/file/directory/${id}`); 
+}
+
 interface FileItem {
   user: UserInfo;
   id: number;

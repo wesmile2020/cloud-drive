@@ -32,7 +32,7 @@ type DBFile struct {
 	gorm.Model
 	Name         string `gorm:"not null"` // 文件名称
 	Size         int64  `gorm:"not null"` // 文件大小，单位为字节
-	FileID       uint   `gorm:"not null"` // 文件ID
+	FileID       string `gorm:"not null"` // 文件ID
 	UserID       uint   `gorm:"not null"` // 用户ID
 	User         DBUser `gorm:"foreignKey:UserID"`
 	ParentID     uint   `gorm:"not null"` // 父文件夹ID
