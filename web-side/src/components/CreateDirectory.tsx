@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import { FileTreeResponse, createDirectory } from '@/services/api';
-import BaseDirectory, { FormValues } from './BaseDirectory';
+import EditFileModel, { FormValues } from './EditFileModel';
 
 interface Props {
   open: boolean;
@@ -27,7 +27,8 @@ function CreateDirectory(props: Props) {
   }
 
   return (
-    <BaseDirectory title="新建文件夹"
+    <EditFileModel title="新建文件夹"
+      type="directory"
       open={props.open}
       onClose={props.onClose}
       directoryTree={props.directoryTree}

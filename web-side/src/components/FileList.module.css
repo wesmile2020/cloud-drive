@@ -3,10 +3,16 @@
   overflow: hidden;
 }
 
-.table {
+.table_wrapper {
+  background-color: #fff;
+  overflow: hidden;
   border-radius: 8px;
   overflow: hidden;
-  background-color: #fff;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .avatar {

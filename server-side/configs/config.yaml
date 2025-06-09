@@ -2,4 +2,4 @@ server:
   port: 8080
   mode: debug
 database:
-  dsn: "cloud-drive.db"
+  dsn: cloud-drive.db

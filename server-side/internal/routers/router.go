@@ -3,14 +3,13 @@ package routers
 import (
 	"cloud-drive/internal/controllers"
 	"cloud-drive/internal/services"
+	"cloud-drive/utils"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB, rootDir string) *gin.Engine {
-	engine := gin.Default()
-
+func SetupRouter(engine *gin.Engine, db *gorm.DB, pathUtil *utils.PathUtil) {
 	group := engine.Group("/api")
 
 	// 注册路由
@@ -19,9 +18,8 @@ func SetupRouter(db *gorm.DB, rootDir string) *gin.Engine {
 	userHandler.RegisterRoutes(group)
 
 	// 注册路由
-	fileService := services.NewFileService(db, rootDir)
+	fileService := services.NewFileService(db, pathUtil)
 	fileHandler := controllers.NewFileController(fileService)
 	fileHandler.RegisterRoutes(group)
 
-	return engine
 }

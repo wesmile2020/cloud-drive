@@ -62,12 +62,12 @@ export function createDirectory(params: CreateDirectoryParams) {
   return axios.post('/api/file/directory', params);
 }
 
-interface UpdateDirectoryParams {
+interface UpdateAPIFileParams {
   name: string;
   permission: Permission;
 }
 
-export function updateDirectory(id: number, params: UpdateDirectoryParams) {
+export function updateDirectory(id: number, params: UpdateAPIFileParams) {
   return axios.put(`/api/file/directory/${id}`, params); 
 }
 
@@ -104,4 +104,44 @@ export interface FileTreeResponse {
 
 export function getFiles(parentId: number): Promise<FileTreeResponse> {
   return axios.get(`/api/file/${parentId}`);
+}
+
+
+interface UploadFileParams {
+  file: Blob;
+  name: string;
+  parentId: number;
+  permission: Permission;
+  total: number;
+  index: number;
+  fileId?: string;
+  onProgress?: (progress: number) => void;
+}
+
+export function uploadFile(params: UploadFileParams): Promise<{ fileId: string }> {
+  const formData = new FormData();
+  formData.append('file', params.file);
+  formData.append('name', params.name);
+  formData.append('parentId', params.parentId.toString());
+  formData.append('permission', params.permission.toString());
+  formData.append('total', params.total.toString());
+  formData.append('index', params.index.toString());
+  if (params.fileId) {
+    formData.append('fileId', params.fileId);
+  }
+
+  return axios.post('/api/file/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }, 
+    onUploadProgress(progressEvent) {
+      params.onProgress?.(progressEvent.progress!);
+    },
+  })
+}
+
+export function deleteFile(id: number) {
+  return axios.delete(`/api/file/${id}`); 
+}
+
+export function updateFile(id: number, params: UpdateAPIFileParams) {
+  return axios.put(`/api/file/${id}`, params);
 }

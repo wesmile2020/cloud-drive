@@ -3,7 +3,8 @@ package controllers
 import (
 	"cloud-drive/internal/models"
 	"cloud-drive/internal/services"
-	"cloud-drive/middleware"
+	"cloud-drive/middlewares"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -84,7 +85,7 @@ func (controller *FileController) UpdateDirectory(ctx *gin.Context) {
 			Data:    errorMessages,
 		})
 	}
-	directoryID := ctx.Param("directoryID")
+	directoryID := ctx.Param("id")
 	if directoryID == "" {
 		ctx.JSON(http.StatusOK, &models.Response{
 			Code:    http.StatusBadRequest,
@@ -133,7 +134,7 @@ func (controller *FileController) UpdateDirectory(ctx *gin.Context) {
 
 func (controller *FileController) DeleteDirectory(ctx *gin.Context) {
 	// Implement the logic to delete a directory
-	directoryID := ctx.Param("directoryID")
+	directoryID := ctx.Param("id")
 	if directoryID == "" {
 		ctx.JSON(http.StatusOK, &models.Response{
 			Code:    http.StatusBadRequest,
@@ -201,7 +202,7 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 	var uid uint = 0
 	tokenString, err := ctx.Cookie("token")
 	if err == nil {
-		claims, err := middleware.ParseJWTToken(tokenString, controller.service.DB)
+		claims, err := middlewares.ParseJWTToken(tokenString, controller.service.DB)
 		if err == nil {
 			uid = claims.UserID
 		}
@@ -218,16 +219,198 @@ func (controller *FileController) GetFiles(ctx *gin.Context) {
 	})
 }
 
+func (controller *FileController) UploadFile(ctx *gin.Context) {
+	// Implement the logic to upload a file
+	userId, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user ID",
+			Data:    nil,
+		})
+		return
+	}
+	uid := userId.(uint)
+
+	var request models.UploadFileRequest
+	if err := ctx.ShouldBind(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+
+	fileId, err := controller.service.UploadFile(&request, uid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    gin.H{"fileId": fileId},
+	})
+}
+
+func (controller *FileController) DeleteFile(ctx *gin.Context) {
+	// Implement the logic to download a file
+	userId, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user ID",
+			Data:    nil,
+		})
+	}
+	uid := userId.(uint)
+
+	fileId := ctx.Param("id")
+	if fileId == "" {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "File ID is required",
+			Data:    nil,
+		})
+	}
+
+	id, err := strconv.ParseUint(fileId, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid file ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	if err := controller.service.DeleteFile(uint(id), uid); err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    nil,
+	})
+}
+
+func (controller *FileController) UpdateFile(ctx *gin.Context) {
+	userId, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to get user ID",
+			Data:    nil,
+		})
+	}
+	uid := userId.(uint)
+
+	fileId := ctx.Param("id")
+	if fileId == "" {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "File ID is required",
+			Data:    nil,
+		})
+	}
+
+	id, err := strconv.ParseUint(fileId, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid file ID",
+			Data:    nil,
+		})
+	}
+
+	var request models.UpdateFileRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+	}
+
+	if err := controller.service.UpdateFile(uint(id), uid, &request); err != nil {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &models.Response{
+		Code:    http.StatusOK,
+		Message: "",
+		Data:    nil,
+	})
+}
+
+func (controller *FileController) DownloadFile(ctx *gin.Context) {
+	// Implement the logic to download a file
+	fileId := ctx.Param("id")
+	if fileId == "" {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("file ID is required"))
+		return
+	}
+
+	id, err := strconv.ParseUint(fileId, 10, 64)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	var uid uint = 0
+	userId, exists := ctx.Get("userID")
+	if exists {
+		uid = userId.(uint)
+	}
+	fileUrl, err := controller.service.DownloadFile(uint(id), uid)
+	if err != nil {
+		ctx.AbortWithError(http.StatusOK, err)
+		return
+	}
+	ctx.File(fileUrl)
+}
+
 func (controller *FileController) RegisterRoutes(router *gin.RouterGroup) {
 	fileGroup := router.Group("/file")
 	{
 		fileGroup.GET("/:directoryID", controller.GetFiles)
+		fileGroup.GET("/download/:id", controller.DownloadFile)
 	}
 
-	authGroup := router.Group("/file", middleware.AuthMiddleware(controller.service.DB))
+	authGroup := router.Group("/file", middlewares.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.POST("/directory", controller.CreateDirectory)
-		authGroup.PUT("/directory/:directoryID", controller.UpdateDirectory)
-		authGroup.DELETE("/directory/:directoryID", controller.DeleteDirectory)
+		authGroup.PUT("/directory/:id", controller.UpdateDirectory)
+		authGroup.DELETE("/directory/:id", controller.DeleteDirectory)
+		authGroup.POST("/upload", controller.UploadFile)
+		authGroup.DELETE("/:id", controller.DeleteFile)
+		authGroup.PUT("/:id", controller.UpdateFile)
 	}
 }

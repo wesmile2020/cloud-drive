@@ -18,6 +18,7 @@ func InitDB(dsn string) (*gorm.DB, error) {
 	db.AutoMigrate(&models.DBFile{})
 	db.AutoMigrate(&models.DBDirectory{})
 	db.AutoMigrate(&models.DBToken{})
+	db.AutoMigrate(&models.DBFileChunk{})
 
 	return db, nil
 }

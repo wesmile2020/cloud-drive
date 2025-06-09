@@ -3,7 +3,7 @@ package controllers
 import (
 	"cloud-drive/internal/models"
 	"cloud-drive/internal/services"
-	"cloud-drive/middleware"
+	"cloud-drive/middlewares"
 	"net/http"
 	"time"
 
@@ -90,7 +90,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response)
 		return
 	}
-	tokenString, err := middleware.GenerateJWTToken(apiUser.ID)
+	tokenString, err := middlewares.GenerateJWTToken(apiUser.ID)
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
@@ -102,7 +102,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 	}
 
 	// 将token存入数据库中
-	expiredAt := time.Now().Add(middleware.Duration).Unix()
+	expiredAt := time.Now().Add(middlewares.Duration).Unix()
 	if err := controller.service.SaveToken(tokenString, apiUser.ID, expiredAt); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
@@ -113,7 +113,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 	}
 
 	// token 有效期是一周，设置cookie
-	ctx.SetCookie("token", tokenString, int(middleware.Duration*3600), "/", "", false, true)
+	ctx.SetCookie("token", tokenString, int(middlewares.Duration*3600), "/", "", false, true)
 
 	response := models.Response{
 		Code:    http.StatusOK,
@@ -193,7 +193,7 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 		userGroup.POST("/logout", controller.Logout)
 	}
 	// 验证token的中间件
-	authGroup := router.Group("/user", middleware.AuthMiddleware(controller.service.DB))
+	authGroup := router.Group("/user", middlewares.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.GET("/info", controller.GetUserInfo)
 	}

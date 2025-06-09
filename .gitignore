@@ -7,3 +7,5 @@ dist
 .idea
 *.db
 *.exe
+.cloud_drive_files
+server-side/static

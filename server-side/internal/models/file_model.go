@@ -2,6 +2,7 @@ package models
 
 import (
 	"cloud-drive/permissions"
+	"mime/multipart"
 
 	"gorm.io/gorm"
 )
@@ -34,7 +35,7 @@ type DBFile struct {
 	Size         int64  `gorm:"not null"` // 文件大小，单位为字节
 	FileID       string `gorm:"not null"` // 文件ID
 	UserID       uint   `gorm:"not null"` // 用户ID
-	User         DBUser `gorm:"foreignKey:UserID"`
+	User         DBUser `gorm:"foreignKey:UserID;references:ID"`
 	ParentID     uint   `gorm:"not null"` // 父文件夹ID
 	Public       bool   `gorm:"not null"` // 是否公开
 	ParentPublic bool   `gorm:"not null"` // 父文件夹是否公开
@@ -43,6 +44,21 @@ type DBFile struct {
 
 func (db *DBFile) TableName() string {
 	return "file"
+}
+
+func (db *DBFile) ToAPIFile() *APIFile {
+	return &APIFile{
+		User:        db.User.ToAPIUser(),
+		ID:          db.ID,
+		Name:        db.Name,
+		Size:        db.Size,
+		FileID:      db.ID,
+		ParentID:    db.ParentID,
+		Public:      db.Public,
+		Permission:  db.Permission,
+		IsDirectory: false,
+		Timestamp:   db.UpdatedAt.Unix(),
+	}
 }
 
 type APIDirectory struct {
@@ -99,5 +115,31 @@ type CreateDirectoryRequest struct {
 
 type UpdateDirectoryRequest struct {
 	Name       string `json:"name" binding:"required"`       // 文件夹名称
+	Permission *uint  `json:"permission" binding:"required"` // 权限 0:私有 1:继承父目录的权限 2:公开
+}
+
+type DBFileChunk struct {
+	gorm.Model
+	FileID      string `gorm:"not null"` // 文件ID
+	TotalSize   uint   `gorm:"not null"` // 总大小
+	CurrentSize uint   `gorm:"not null"` // 当前大小
+}
+
+func (db *DBFileChunk) TableName() string {
+	return "file_chunk"
+}
+
+type UploadFileRequest struct {
+	File       *multipart.FileHeader `form:"file" binding:"required"`       // 文件
+	Name       string                `form:"name" binding:"required"`       // 文件名称
+	ParentID   *uint                 `form:"parentId" binding:"required"`   // 父文件夹ID
+	Permission *uint                 `form:"permission" binding:"required"` // 权限 0:私有 1:继承父目录的权限 2:公开
+	Total      *uint                 `form:"total" binding:"required"`      // 总片数
+	Index      *uint                 `form:"index" binding:"required"`      // 当前片数
+	FileID     string                `form:"fileId"`                        // 分片ID
+}
+
+type UpdateFileRequest struct {
+	Name       string `json:"name" binding:"required"`       // 文件名称
 	Permission *uint  `json:"permission" binding:"required"` // 权限 0:私有 1:继承父目录的权限 2:公开
 }

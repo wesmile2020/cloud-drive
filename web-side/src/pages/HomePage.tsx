@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useParams } from 'react-router';
-import { Breadcrumb, BreadcrumbProps } from 'antd';
-import { HomeFilled } from '@ant-design/icons';
+import { Breadcrumb, BreadcrumbProps, message, Upload, UploadProps } from 'antd';
+import { HomeFilled, InboxOutlined } from '@ant-design/icons';
 
 import HomeMenu from '@/components/HomeMenu';
 import FileList from '@/components/FileList';
@@ -10,6 +10,7 @@ import { FileTreeResponse, getFiles } from '@/services/api';
 
 import styles from './HomePage.module.css';
 import { Permission } from '@/config/enums';
+import { useUpload } from '@/hooks/useUpload';
 
 const homeTree: FileTreeResponse['tree'] = {
   id: 0,
@@ -58,6 +59,8 @@ function Home() {
   const [fileTree, setFileTree] = React.useState<FileTreeResponse['tree']>(null);
   const [loading, setLoading] = React.useState(false);
   const [breadcrumbs, setBreadcrumbs] = React.useState<BreadcrumbProps['items']>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, upload] = useUpload();
 
   const fetchFiles = React.useCallback(() => {
     setLoading(true);
@@ -80,6 +83,13 @@ function Home() {
     fetchFiles();
   }, [fetchFiles]);
 
+  const uploadAction: UploadProps['customRequest'] = async (options) => {
+    const file = options.file as File;
+    await upload(file, directoryId, Permission.inherit);
+    message.success('上传成功');
+    fetchFiles();
+  }
+
   return (
     <>
       <HomeMenu directoryTree={fileTree}
@@ -90,6 +100,21 @@ function Home() {
           items={breadcrumbs}
         />
       </div>
+      <div className={styles.upload}>
+        <Upload.Dragger showUploadList={false}
+          customRequest={uploadAction}>
+          <p className="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p className="ant-upload-text">
+            点击或拖拽文件到此区域上传
+          </p>
+          <p className="ant-upload-hint">
+            涉密文件请不要上传
+          </p>
+        </Upload.Dragger>
+      </div>
+      
       <FileList files={files}
         directoryTree={fileTree}
         loading={loading}

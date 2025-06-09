@@ -1,8 +1,10 @@
 package configs
 
 import (
+	"cloud-drive/utils"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -25,8 +27,36 @@ type Config struct {
 }
 
 // LoadConfig 从指定路径加载配置文件
-func LoadConfig(configPath string) (*Config, error) {
-	file, err := os.ReadFile(configPath)
+func LoadConfig(pathUtil *utils.PathUtil) (*Config, error) {
+	cfgDir := filepath.Join(pathUtil.GetRootDir(), "configs")
+	cfgPath := filepath.Join(cfgDir, "config.yaml")
+
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		// 配置文件不存在，创建默认配置文件
+		defaultConfig := Config{
+			Server: ServerConfig{
+				Port: "8080",
+				Mode: "debug",
+			},
+			Database: DatabaseConfig{
+				DSN: "cloud-drive.db",
+			},
+		}
+
+		file, err := yaml.Marshal(&defaultConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal default config: %w", err)
+		}
+
+		utils.CreateDir(cfgDir)
+		if err := os.WriteFile(cfgPath, file, 0644); err != nil {
+			return nil, fmt.Errorf("failed to write default config file: %w", err)
+		}
+
+		return &defaultConfig, nil
+	}
+
+	file, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

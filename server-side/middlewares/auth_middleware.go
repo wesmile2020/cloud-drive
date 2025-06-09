@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"cloud-drive/internal/models"
@@ -65,7 +65,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 		// 从 cookie 中获取 token
 		tokenString, err := ctx.Cookie("token")
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusOK, models.Response{
+			ctx.AbortWithStatusJSON(http.StatusOK, &models.Response{
 				Code:    http.StatusUnauthorized,
 				Message: "Unauthorized",
 				Data:    nil,
@@ -76,7 +76,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 		// 解析 token
 		claims, err := ParseJWTToken(tokenString, db)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusOK, models.Response{
+			ctx.AbortWithStatusJSON(http.StatusOK, &models.Response{
 				Code:    http.StatusUnauthorized,
 				Message: err.Error(),
 				Data:    nil,
@@ -86,6 +86,5 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 
 		// 将用户信息存入上下文
 		ctx.Set("userID", claims.UserID)
-		ctx.Next()
 	}
 }

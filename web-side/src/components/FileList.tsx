@@ -1,16 +1,19 @@
 import React from 'react';
-import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps, Popconfirm } from 'antd';
-import { DeleteOutlined, EditOutlined, FileFilled, FolderFilled, MoreOutlined } from '@ant-design/icons';
+import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps, Tooltip } from 'antd';
+import { DeleteOutlined, DownloadOutlined, EditOutlined, FolderFilled, MoreOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { Link } from 'react-router';
 import { FileTreeResponse } from '@/services/api';
-import { formatSize } from '@/utils/utils';
+import { downloadFile, formatSize } from '@/utils/utils';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { Permission } from '@/config/enums';
-import UpdateDirectory from './UpdateDirectory';
+import UpdateFileModel from './UpdateFileModel';
+import DeleteMenuItem from './DeleteMenuItem';
+import FilePrefix from './FileName';
 
 import styles from './FileList.module.css';
-
+import FileUploadProgress from './FileUploadProgress';
+import { useUpload } from '@/hooks/useUpload';
 interface Props {
   files: FileTreeResponse['files'];
   directoryTree: FileTreeResponse['tree'];
@@ -30,58 +33,67 @@ function FileList(props: Props) {
   const [scrollY, setScrollY] = React.useState(0);
   const [userInfo] = useUserInfo();
   const [operateRecord, setOperateRecord] = React.useState<FileTreeResponse['files'][0] | null>(null);
+  const [openRecordId, setOpenRecordId] = React.useState<number | null>(null);
+  const [uploadList] = useUpload();
 
   function getOperates(record: FileTreeResponse['files'][0]): MenuProps['items'] {
-    if (record.isDirectory) {
-      return [
-        {
-          key: '1',
-          label: '编辑',
-          icon: <EditOutlined />,
-          disabled: userInfo?.id !== record.user.id,
-          onClick: () => {
-            setOperateRecord(record);
-          }
-        },
-        {
-          key: '2',
-          label: (
-            <Popconfirm title="确认删除？">
-              删除
-            </Popconfirm>
-          ),
-          icon: <DeleteOutlined />,
-          disabled: userInfo?.id !== record.user.id,
-          onClick: () => {
-            console.log('删除', record);  
-          }
+    const operates = [
+      {
+        key: 'edit',
+        label: '编辑',
+        icon: <EditOutlined />,
+        disabled: userInfo?.id !== record.user.id,
+        onClick() {
+          setOperateRecord(record);
         }
-      ];
-    } else {
-      return [
+      },
+      {
+        key: 'delete',
+        danger: true,
+        label: '删除',
+        icon: <DeleteOutlined />,
+        disabled: userInfo?.id !== record.user.id,
+      }
+    ];
 
-      ];
+    if (!record.isDirectory) {
+      operates.unshift({
+        key: 'download',
+        label: '下载',
+        icon: <DownloadOutlined />,
+        disabled: false,
+        onClick() {
+          downloadFile(`/api/file/download/${record.id}`, record.name);
+        }
+      });
     }
+    return operates;
   }
 
   const columns: TableColumnType<FileTreeResponse['files'][0]>[] = [
     {
       title: '名称',
       dataIndex: 'name',
+      ellipsis: {
+        showTitle: false,
+      },
       render(name: string, record) {
-        if (record.isDirectory) {
-          return (
-            <Link to={`/home/${record.id}`}>
-              <FolderFilled /> {name}
-            </Link>
-          );
-        } else {
-          return (
-            <>
-              <FileFilled /> {name}
-            </>
-          );
-        }
+        return (
+          <div className={styles.name}>
+            {
+              record.isDirectory ? (
+                <Tooltip title={name}
+                  placement='topLeft'>
+                  <Link to={`/home/${record.id}`}>
+                    <FolderFilled />&nbsp;{name}
+                  </Link>
+                </Tooltip>
+              ) : (
+                <FilePrefix name={name}/>
+              )
+            }
+          </div>
+        )
       }
     },
     {
@@ -132,7 +144,33 @@ function FileList(props: Props) {
       dataIndex: 'id',
       render: (_: number, record) => {
         return (
-          <Dropdown menu={{ items: getOperates(record)}}
+          <Dropdown menu={{
+              items: getOperates(record),
+              onClick() {
+                setOpenRecordId(record.id);
+              },
+              _internalRenderMenuItem(originNode, menuItemProps) {
+                if (menuItemProps.eventKey === 'delete') {
+                  return (
+                    <DeleteMenuItem record={record}
+                      disabled={menuItemProps.disabled}
+                      danger={menuItemProps.danger}
+                      afterDelete={() => {
+                        setOpenRecordId(null);
+                        props.afterUpdate?.();
+                      }}
+                    />
+                  );
+                }
+                return originNode;
+              }
+            }}
+            open={openRecordId === record.id}
+            onOpenChange={(open, info) => {
+              if (info.source === 'trigger') {
+                setOpenRecordId(open ? record.id : null);
+              }
+            }}
             trigger={['click']}
             disabled={record.isDirectory && record.user.id !== userInfo?.id}>
             <Button shape='circle'
@@ -149,10 +187,10 @@ function FileList(props: Props) {
     if (!domRef.current) {
       return;
     }
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       const { clientHeight } = domRef.current!;
       setScrollY(clientHeight - 55);
-    });
+    }, 64);
   }
 
   React.useEffect(() => {
@@ -166,30 +204,39 @@ function FileList(props: Props) {
   return (
     <div className={styles.file_list}
       ref={domRef}>
-      <Table className={styles.table}
-        pagination={false}
-        loading={loading}
-        columns={columns}
-        dataSource={files}
-        rowKey="id"
-        scroll={{ y: scrollY }}
-        virtual={true}
-      />
-      {
-        operateRecord && (
-          <UpdateDirectory id={operateRecord.id}
-            open={Boolean(operateRecord)}
-            directoryTree={props.directoryTree}
-            onClose={() => setOperateRecord(null)}
-            values={{
-              directory: operateRecord.name,
-              permission: operateRecord.permission,
-            }}
-            afterUpdate={props.afterUpdate}
-          />
-        )
-      }
-      
+      <div className={styles.table_wrapper}>
+        <Table pagination={false}
+          loading={loading}
+          columns={columns}
+          dataSource={files}
+          rowKey="id"
+          scroll={{ y: scrollY }}
+          virtual={true}
+        />
+        {
+          operateRecord && (
+            <UpdateFileModel id={operateRecord.id}
+              open={Boolean(operateRecord)}
+              directoryTree={props.directoryTree}
+              onClose={() => setOperateRecord(null)}
+              values={{
+                directory: operateRecord.name,
+                permission: operateRecord.permission,
+              }}
+              afterUpdate={props.afterUpdate}
+              type={operateRecord.isDirectory? 'directory' : 'file'}
+            />
+          )
+        }
+        {
+          uploadList.map((item, index) => (
+            <FileUploadProgress key={index}
+              name={item.name}
+              progress={item.progress * 100}
+            />
+          )) 
+        }
+      </div>
     </div>
   );
 }

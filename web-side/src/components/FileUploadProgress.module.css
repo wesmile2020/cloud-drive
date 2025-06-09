@@ -1,0 +1,18 @@
+.upload_progress {
+  display: flex;
+  padding: 16px;
+  height: 65px;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.spin {
+  margin-right: 10px;
+}
+
+.upload_bar {
+  margin-left: 16px;
+  display: inline-flex;
+  width: fit-content;
+}

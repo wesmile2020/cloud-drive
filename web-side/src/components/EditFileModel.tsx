@@ -17,9 +17,10 @@ interface Props {
   directoryTree: FileTreeResponse['tree'];
   onFinish: (values: FormValues) => void;
   values?: FormValues;
+  type: 'directory' | 'file';
 }
 
-function BaseDirectory(props: Props) {
+function EditFileModel(props: Props) {
   const [form] = Form.useForm();
   const [permission, setPermission] = React.useState<number>(props.values?.permission ?? Permission.inherit);
   const isPublic = React.useMemo(() => {
@@ -29,6 +30,8 @@ function BaseDirectory(props: Props) {
     return calculatePublic(props.directoryTree.public, permission);
   }, [props.directoryTree, permission]);
 
+  const tipText = props.type === 'file' ? '文件' : '文件夹';
+
   return (
     <Modal title={props.title}
       open={props.open}
@@ -37,15 +40,19 @@ function BaseDirectory(props: Props) {
       cancelText='取消'
       onOk={form.submit}>
       <Form onFinish={props.onFinish}
-        onValuesChange={(values) => setPermission(values.permission)}
+        onValuesChange={(values) => {
+          if (typeof values.permission === 'number') {
+            setPermission(values.permission);
+          }
+        }}
         form={form}
         initialValues={{
           permission,
           directory: props.values?.directory ?? '',
         }}>
         <Form.Item name="directory"
-          rules={[{ required: true, message: '文件夹名称不能为空' }]}>
-          <Input placeholder="请输入文件夹名称"
+          rules={[{ required: true, message: `${tipText}名称不能为空` }]}>
+          <Input placeholder={`请输入${tipText}名称`}
             autoFocus
             prefix={<FolderOutlined />}
           />
@@ -75,4 +82,4 @@ function BaseDirectory(props: Props) {
   );
 }
 
-export default BaseDirectory;
+export default EditFileModel;
