@@ -6,7 +6,7 @@ interface Props {
   record: FileTreeResponse['files'][0];
   afterDelete?: () => void;
   disabled?: boolean;
-  danger?: boolean;
+  className?: string;
 }
 
 function DeleteMenuItem(props: Props) {
@@ -27,8 +27,6 @@ function DeleteMenuItem(props: Props) {
   }
 
   const disabledClassName = props.disabled ? 'ant-dropdown-menu-item-disabled' : '';
-  const dangerClassName = props.danger? 'ant-dropdown-menu-item-danger' : '';
-
   return (
     <Popconfirm title="确定删除吗？"
       okText="确定"
@@ -36,7 +34,7 @@ function DeleteMenuItem(props: Props) {
       onConfirm={deleteItem}
       disabled={props.disabled}
     >
-       <li className={`ant-dropdown-menu-item ${dangerClassName} ${disabledClassName}`}
+       <li className={`ant-dropdown-menu-item ${props.className} ${disabledClassName}`}
         role="menuitem"
         tabIndex={-1}
         aria-describedby="«rh»"

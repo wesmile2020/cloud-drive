@@ -154,7 +154,7 @@ function FileList(props: Props) {
                   return (
                     <DeleteMenuItem record={record}
                       disabled={menuItemProps.disabled}
-                      danger={menuItemProps.danger}
+                      className={menuItemProps.className}
                       afterDelete={() => {
                         setOpenRecordId(null);
                         props.afterUpdate?.();

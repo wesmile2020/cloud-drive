@@ -60,7 +60,7 @@ func main() {
 		return
 	}
 
-	schedules.Run(db)
+	schedules.Run(db, pathUtil)
 
 	// 初始化路由
 	engine := gin.New()
