@@ -74,6 +74,9 @@ func main() {
 	// 注册路由
 	routers.SetupRouter(engine, db, pathUtil)
 
+	// mailService := services.NewMailService(&cfg.Email)
+	// mailService.SendEmail("13127882685@163.com", "找回密码", "您的验证码为：123456")
+
 	// 启动服务器
 	if err := engine.Run(":" + cfg.Server.Port); err != nil {
 		logrus.Errorf("Failed to start server: %v", err)

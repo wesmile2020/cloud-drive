@@ -51,11 +51,13 @@ func (service *MailService) SendEmail(to string, subject string, body string) er
 	}
 	defer wc.Close()
 
-	message := []byte("From: cloud_drive <" + service.config.Username + ">\r\n" +
-		"To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" +
-		body + "\r\n")
+	message := []byte(
+		"From: cloud_drive <" + service.config.Username + ">\n" +
+			"To: " + to + "\n" +
+			"Subject: " + subject + "\n" +
+			"\n" +
+			body + "\n",
+	)
 	_, err = wc.Write(message)
 
 	if err != nil {
