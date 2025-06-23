@@ -1,0 +1,33 @@
+.user_page {
+  background-color: #fff;
+  height: 100vh;
+  padding-left: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info_item {
+  margin-bottom: 10px;
+}
+
+.key {
+  display: inline-block;
+  width: 60px;
+}
+
+.key::after {
+  content: ':';
+}
+
+.value {
+  color: rgba(1, 1, 1, 0.5);
+  font-weight: bold;
+}

@@ -8,6 +8,7 @@ const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage'));
 const UserPage = React.lazy(() => import('./pages/UserPage'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
+const RetrievePassword = React.lazy(() => import('./pages/RetrievePassword'));
 
 const HomeLayoutWithProvider = () => {
   return (
@@ -31,6 +32,7 @@ function App() {
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/retrieve-password" element={<RetrievePassword />} />
       </Routes>
     </HashRouter>
   );

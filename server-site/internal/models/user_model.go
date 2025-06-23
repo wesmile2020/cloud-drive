@@ -56,14 +56,25 @@ func (user DBUser) ToAPIUser() APIUser {
 
 // RegisterUserRequest 用于接收前端注册用户的参数
 type RegisterUserRequest struct {
-	Name     string `json:"name" validate:"required,min=1,max=50"`
-	Email    string `json:"email" validate:"required,email"`
-	Phone    string `json:"phone" validate:"required"`
-	Password string `json:"password" validate:"required,min=6"`
+	Name     string `json:"name" binding:"required,min=1,max=50"`
+	Email    string `json:"email" binding:"required,email"`
+	Phone    string `json:"phone" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
 }
 
 // LoginUserRequest 用于接收前端登录用户的参数
 type LoginUserRequest struct {
-	Account  string `json:"account" validate:"required"` // 可以是 phone 或 email
-	Password string `json:"password" validate:"required"`
+	Account  string `json:"account" binding:"required"` // 可以是 phone 或 email
+	Password string `json:"password" binding:"required"`
+}
+
+type EditUserInfoRequest struct {
+	Name  string `json:"name" binding:"required,min=1,max=50"`
+	Email string `json:"email" binding:"required,email"`
+	Phone string `json:"phone" binding:"required"`
+}
+
+type UpdatePasswordRequest struct {
+	OldPassword string `json:"oldPassword" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required,min=6"`
 }

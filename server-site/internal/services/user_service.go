@@ -106,3 +106,39 @@ func (service *UserService) GetUserInfo(userID uint) (*models.APIUser, error) {
 
 	return &apiUser, nil
 }
+
+func (service *UserService) EditUserInfo(userID uint, apiUser *models.APIUser) error {
+	var dbUser models.DBUser
+	if err := service.DB.First(&dbUser, userID).Error; err != nil {
+		return err
+	}
+	dbUser.Name = apiUser.Name
+	dbUser.Email = apiUser.Email
+	dbUser.Phone = apiUser.Phone
+	return service.DB.Save(&dbUser).Error
+}
+
+func (service *UserService) EditPassword(userID uint, oldPassword, newPassword string) error {
+	var dbPassword models.DBPassword
+	if err := service.DB.Where("user_id = ?", userID).First(&dbPassword).Error; err != nil {
+		return err
+	}
+
+	// 对比旧密码
+	if err := bcrypt.CompareHashAndPassword([]byte(dbPassword.Password), []byte(oldPassword)); err != nil {
+		return fmt.Errorf("旧密码错误")
+	}
+
+	// 对新密码进行加密
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// 更新密码
+	dbPassword.Password = string(hashedNewPassword)
+	if err := service.DB.Save(&dbPassword).Error; err != nil {
+		return err
+	}
+	return nil
+}

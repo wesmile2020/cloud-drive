@@ -1,10 +1,12 @@
 import React from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { useNavigate, Link, useSearchParams } from 'react-router';
-import styles from './LoginPage.module.css';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
+import CardWrapper from '@/components/CardWrapper';
+import LinkWrapper from '@/components/LinkWrapper';
 
 import { login } from '@/services/api';
+
 
 interface LoginParams {
   account: string;
@@ -31,51 +33,53 @@ function LoginPage() {
   };
 
   return (
-    <div className={styles.login_container}>
-      <div className={styles.login_card}>
-        <h1 className={styles.login_title}>云盘登录</h1>
-        <Form
-          onFinish={onFinish}
-          layout="vertical"
+    <CardWrapper title='云盘登录'>
+      <Form
+        onFinish={onFinish}
+        layout="vertical"
+      >
+        <Form.Item
+          name="account"
+          rules={[{ required: true, message: '请输入手机号或邮箱' }]}
         >
-          <Form.Item
-            name="account"
-            rules={[{ required: true, message: '请输入手机号或邮箱' }]}
+          <Input
+            placeholder="请输入手机号或邮箱"
+            prefix={<UserOutlined />}
+          />
+        </Form.Item>
+        <Form.Item
+          name="password"
+          rules={[{ required: true, message: '请输入密码' }]}
+        >
+          <Input.Password
+            placeholder="请输入密码"
+            prefix={<LockOutlined />}
+          />
+        </Form.Item>
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            icon={<LoginOutlined />}
           >
-            <Input
-              placeholder="请输入手机号或邮箱"
-              prefix={<UserOutlined />}
-            />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
-          >
-            <Input.Password
-              placeholder="请输入密码"
-              prefix={<LockOutlined />}
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              className={styles.login_button}
-              icon={<LoginOutlined />}
-            >
-              登录
-            </Button>
-          </Form.Item>
-        </Form>
-        <div className={styles.login_link}>
-          <span>还没有账号？</span>
-          <Link to={registerUrl} className={styles.login_link_text}>
-            立即注册
-          </Link>
-        </div>
-      </div>
-    </div>
+            登录
+          </Button>
+        </Form.Item>
+      </Form>
+      <LinkWrapper>
+        <span>还没有账号？</span>
+        <Link to={registerUrl}>
+          立即注册
+        </Link>
+      </LinkWrapper>
+      <LinkWrapper>
+        <Link to='/retrieve-password'
+          style={{ fontSize: 12, color: '#1890ff' }}>
+          忘记密码
+        </Link>
+      </LinkWrapper>
+    </CardWrapper>
   );
 }
 

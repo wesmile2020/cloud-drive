@@ -185,6 +185,98 @@ func (controller *UserController) GetUserInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (controller *UserController) EditUserInfo(ctx *gin.Context) {
+	var request models.EditUserInfoRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+
+	apiUser := &models.APIUser{
+		Name:  request.Name,
+		Email: request.Email,
+		Phone: request.Phone,
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		response := models.Response{
+			Code:    http.StatusUnauthorized,
+			Message: "未登录",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	if err := controller.service.EditUserInfo(userID.(uint), apiUser); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: "编辑用户信息失败",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "编辑用户信息成功",
+		Data:    nil,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) UpdatePassword(ctx *gin.Context) {
+	var request models.UpdatePasswordRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		response := models.Response{
+			Code:    http.StatusUnauthorized,
+			Message: "未登录",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	if err := controller.service.EditPassword(userID.(uint), request.OldPassword, request.NewPassword); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "修改密码成功",
+		Data:    nil,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 	userGroup := router.Group("/user")
 	{
@@ -196,5 +288,7 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 	authGroup := router.Group("/user", middlewares.AuthMiddleware(controller.service.DB))
 	{
 		authGroup.GET("/info", controller.GetUserInfo)
+		authGroup.PUT("/info", controller.EditUserInfo)
+		authGroup.PUT("/password", controller.UpdatePassword)
 	}
 }

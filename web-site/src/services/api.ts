@@ -8,7 +8,7 @@ axios.interceptors.response.use(
       return response.data.data;
     } else {
       if (response.data.code === 401) {
-        throw new Error(response.data.code);
+        throw new Error('Unauthorized');
       } else {
         message.error(response.data.message);
         throw new Error(response.data.message);
@@ -144,4 +144,18 @@ export function deleteFile(id: number) {
 
 export function updateFile(id: number, params: UpdateAPIFileParams) {
   return axios.put(`/api/file/${id}`, params);
+}
+
+interface EditUserInfoRequest {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export function editUserInfo(params: EditUserInfoRequest) {
+  return axios.put('/api/user/info', params);
+}
+
+export function updatePassword(oldPassword: string, newPassword: string) {
+  return axios.put('/api/user/password', { oldPassword, newPassword });
 }

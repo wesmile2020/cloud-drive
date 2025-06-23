@@ -46,7 +46,7 @@ export function UploadProvider(props: React.PropsWithChildren) {
           setUploadingFiles((prev) => [...prev]);
         }
       }).catch((err) => {
-        if (err.message === '401') {
+        if (err.message === 'Unauthorized') {
           message.error('请先登录，在上传文件');
         } else {
           message.error('上传失败，请重试');

@@ -1,5 +1,4 @@
-
-.login_container {
+.card_container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7,7 +6,7 @@
   background-color: #f0f2f5;
 }
 
-.login_card {
+.card {
   width: 100%;
   max-width: 400px;
   padding: 24px;
@@ -16,15 +15,8 @@
   background-color: #fff;
 }
 
-.login_title {
+.title {
   text-align: center;
   margin-bottom: 24px;
   color: #1890ff;
-}
-
-.login_link {
-  text-align: center;
-  margin-top: 16px;
-  color: #1890ff;
-  text-decoration: none;
 }

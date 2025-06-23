@@ -2,7 +2,7 @@ import { getUserInfo, UserInfo } from '@/services/api';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router';
 
-type UserInfoContextType = [UserInfo | null, (toLogin?: boolean) => Promise<void>];
+type UserInfoContextType = [UserInfo | null, (toLogin?: boolean, reload?: boolean) => Promise<void>];
 
 const UserInfoContext = React.createContext<UserInfoContextType>([null, () => Promise.resolve()]);
 
@@ -12,16 +12,16 @@ export function UserInfoProvider({ children }: React.PropsWithChildren) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const fetchUserInfo = React.useCallback(async (toLogin = true) => {
+  const fetchUserInfo = React.useCallback(async (toLogin = true, reload = false) => {
     try {
-      if (!fetchPromise.current) {
+      if (!fetchPromise.current || reload) {
         fetchPromise.current = getUserInfo();
       }
       const data = await fetchPromise.current;
       setUserInfo(data);
     } catch (error) {
       const code = (error as Error).message;
-      if (code === '401' && toLogin) {
+      if (code === 'Unauthorized' && toLogin) {
         navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
       }
     }
