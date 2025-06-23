@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "server-side"
+			"path": "server-site"
 		},
 		{
-			"path": "web-side"
+			"path": "web-site"
 		}
 	],
 	"settings": {}

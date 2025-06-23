@@ -3,3 +3,9 @@ server:
   mode: debug
 database:
   dsn: cloud-drive.db
+
+email:
+  host: smtp.qq.com
+  port: 465
+  password: eqdbdteprjnebcac
+  username: 819844162@qq.com

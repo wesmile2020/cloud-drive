@@ -20,10 +20,18 @@ type DatabaseConfig struct {
 	DSN string `yaml:"dsn"`
 }
 
+type EmailConfig struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Password string `yaml:"password"`
+	Username string `yaml:"username"`
+}
+
 // Config 总配置结构
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	Email    EmailConfig    `yaml:"email"`
 }
 
 // LoadConfig 从指定路径加载配置文件
