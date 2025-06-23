@@ -50,7 +50,7 @@ function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree
   return result;
 }
 
-function Home() {
+function HomePage() {
   const params = useParams();
   const directoryId = React.useMemo(() => {
     return Number(params.id);
@@ -124,4 +124,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default HomePage;
