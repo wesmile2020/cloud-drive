@@ -60,7 +60,7 @@ func (user DBUser) ToAPIUser() APIUser {
 
 type DBVerifyCode struct {
 	gorm.Model
-	UserID    uint      `gorm:"not null;unique"` // 关联用户 ID
+	Email     string    `gorm:"not null;unique"` // 关联用户邮箱
 	Code      string    `gorm:"not null"`        // 验证码
 	ExpiredAt time.Time `gorm:"not null"`        // 过期时间
 }
@@ -100,6 +100,7 @@ type GetVerifyCodeRequest struct {
 }
 
 type RetrievePasswordRequest struct {
+	Email    string `json:"email" binding:"required,email"`
 	Code     string `json:"code" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
 }

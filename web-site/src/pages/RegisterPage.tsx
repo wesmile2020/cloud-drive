@@ -1,4 +1,4 @@
-import React from 'react';
+import { useMemo } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { Link, useSearchParams } from 'react-router';
 import { UserOutlined, LockOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
@@ -7,11 +7,11 @@ import CardWrapper from '@/components/CardWrapper';
 import LinkWrapper from '@/components/LinkWrapper';
 import { register, RegisterParams } from '@/services/api'
 
-const RegisterPage: React.FC = () => {
+function RegisterPage() {
   const [form] = Form.useForm();
   const [params] = useSearchParams();
 
-  const loginUrl = React.useMemo(() => {
+  const loginUrl = useMemo(() => {
     const redirect = params.get('redirect');
     if (redirect) {
       return `/login?redirect=${encodeURIComponent(redirect)}`;

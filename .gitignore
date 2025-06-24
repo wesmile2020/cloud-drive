@@ -8,4 +8,5 @@ dist
 *.db
 *.exe
 .cloud_drive_files
-server-side/static
+server-site/static
+output

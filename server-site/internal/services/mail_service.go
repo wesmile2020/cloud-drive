@@ -73,7 +73,7 @@ func (service *MailService) SendEmail(to string, subject string, body string) er
 	return nil
 }
 
-func (service *MailService) SendVerifyCode(userID uint, to string) error {
+func (service *MailService) SendVerifyCode(email string) error {
 	// 生成6位验证码
 	codeLength := 6
 	code := make([]byte, codeLength)
@@ -84,12 +84,12 @@ func (service *MailService) SendVerifyCode(userID uint, to string) error {
 
 	strCode := string(code)
 	// 先删除旧的验证码
-	if err := service.DB.Unscoped().Where("user_id = ?", userID).Delete(&models.DBVerifyCode{}).Error; err != nil {
+	if err := service.DB.Unscoped().Where("email = ?", email).Delete(&models.DBVerifyCode{}).Error; err != nil {
 		return err
 	}
 	// 保存验证码到数据库
 	verifyCode := &models.DBVerifyCode{
-		UserID:    userID,
+		Email:     email,
 		Code:      strCode,
 		ExpiredAt: time.Now().Add(time.Minute * 5),
 	}
@@ -99,5 +99,5 @@ func (service *MailService) SendVerifyCode(userID uint, to string) error {
 	subject := "验证码"
 	body := "请不要将验证码告诉他人！\n您的验证码为：" + strCode + "，有效期为5分钟。"
 
-	return service.SendEmail(to, subject, body)
+	return service.SendEmail(email, subject, body)
 }

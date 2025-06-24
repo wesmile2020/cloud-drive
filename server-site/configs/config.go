@@ -9,6 +9,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// LogConfig 日志配置结构
+type LogConfig struct {
+	Level string `yaml:"level"`
+}
+
 // ServerConfig 服务器配置结构
 type ServerConfig struct {
 	Port string `yaml:"port"`
@@ -29,6 +34,7 @@ type EmailConfig struct {
 
 // Config 总配置结构
 type Config struct {
+	Log      LogConfig      `yaml:"log"`
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	Email    EmailConfig    `yaml:"email"`
@@ -42,12 +48,21 @@ func LoadConfig(pathUtil *utils.PathUtil) (*Config, error) {
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
 		// 配置文件不存在，创建默认配置文件
 		defaultConfig := Config{
+			Log: LogConfig{
+				Level: "info",
+			},
 			Server: ServerConfig{
 				Port: "8080",
-				Mode: "debug",
+				Mode: "release",
 			},
 			Database: DatabaseConfig{
 				DSN: "cloud-drive.db",
+			},
+			Email: EmailConfig{
+				Host:     "smtp.qq.com",
+				Port:     "465",
+				Password: "SMTP_Code",
+				Username: "example@qq.com",
 			},
 		}
 

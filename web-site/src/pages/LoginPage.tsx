@@ -1,5 +1,5 @@
-import React from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { useMemo } from 'react';
+import { Form, Input, Button, message, Flex, Checkbox } from 'antd';
 import { useNavigate, Link, useSearchParams } from 'react-router';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import CardWrapper from '@/components/CardWrapper';
@@ -11,13 +11,18 @@ import { login } from '@/services/api';
 interface LoginParams {
   account: string;
   password: string;
+  remember: boolean;
 }
+
+const ACCOUNT_KEY = 'user_account';
+const PASSWORD_KEY = 'user_password';
+const REMEMBER_KEY = 'user_remember';
 
 function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const registerUrl = React.useMemo(() => {
+  const registerUrl = useMemo(() => {
     const redirect = params.get('redirect');
     if (redirect) {
       return `/register?redirect=${encodeURIComponent(redirect)}`;
@@ -27,7 +32,17 @@ function LoginPage() {
 
   const onFinish = async (values: LoginParams) => {
     await login(values.account, values.password);
+    if (values.remember) {
+      localStorage.setItem(ACCOUNT_KEY, values.account);
+      localStorage.setItem(PASSWORD_KEY, values.password);
+      localStorage.setItem(REMEMBER_KEY, 'true');
+    } else {
+      localStorage.removeItem(ACCOUNT_KEY);
+      localStorage.removeItem(PASSWORD_KEY);
+      localStorage.removeItem(REMEMBER_KEY);
+    }
     message.success('登录成功');
+    
     const redirect = params.get('redirect') ?? '/';
     navigate(redirect);
   };
@@ -37,6 +52,11 @@ function LoginPage() {
       <Form
         onFinish={onFinish}
         layout="vertical"
+        initialValues={{
+          account: localStorage.getItem(ACCOUNT_KEY) ?? '',
+          password: localStorage.getItem(PASSWORD_KEY) ?? '',
+          remember: localStorage.getItem(REMEMBER_KEY) === 'true',
+        }}
       >
         <Form.Item
           name="account"
@@ -57,6 +77,19 @@ function LoginPage() {
           />
         </Form.Item>
         <Form.Item>
+          <Flex justify="space-between" align="center">
+            <Form.Item name="remember"
+              valuePropName="checked"
+              noStyle
+            >
+              <Checkbox>记住登录</Checkbox>
+            </Form.Item>
+            <Link to='/retrieve-password'>
+              忘记密码
+            </Link>
+          </Flex>
+        </Form.Item>
+        <Form.Item>
           <Button
             type="primary"
             htmlType="submit"
@@ -71,12 +104,6 @@ function LoginPage() {
         <span>还没有账号？</span>
         <Link to={registerUrl}>
           立即注册
-        </Link>
-      </LinkWrapper>
-      <LinkWrapper>
-        <Link to='/retrieve-password'
-          style={{ fontSize: 12, color: '#1890ff' }}>
-          忘记密码
         </Link>
       </LinkWrapper>
     </CardWrapper>

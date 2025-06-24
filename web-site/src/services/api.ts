@@ -164,6 +164,6 @@ export function getVerifyCode(email: string) {
   return axios.post('/api/user/verify_code', { email });
 }
 
-export function retrievePassword(code: string, password: string) {
-  return axios.post('/api/user/retrieve_password', { code, password });
+export function retrievePassword(email: string, code: string, password: string) {
+  return axios.post('/api/user/retrieve_password', { email, code, password });
 }

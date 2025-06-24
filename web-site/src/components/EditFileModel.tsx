@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useMemo } from 'react';
 import { Form, Modal, Input, Select, Tag } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled, FolderOutlined } from '@ant-design/icons';
 import { FileTreeResponse } from '@/services/api';
@@ -22,8 +22,8 @@ interface Props {
 
 function EditFileModel(props: Props) {
   const [form] = Form.useForm();
-  const [permission, setPermission] = React.useState<number>(props.values?.permission ?? Permission.inherit);
-  const isPublic = React.useMemo(() => {
+  const [permission, setPermission] = useState<number>(props.values?.permission ?? Permission.inherit);
+  const isPublic = useMemo(() => {
     if (!props.directoryTree) {
       return false;
     }

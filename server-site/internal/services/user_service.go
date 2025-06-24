@@ -149,13 +149,18 @@ func (service *UserService) EditPassword(userID uint, oldPassword, newPassword s
 	return nil
 }
 
-func (service *UserService) RetrievePassword(userID uint, code string, password string) error {
+func (service *UserService) RetrievePassword(email string, code string, password string) error {
 	var dbVerifyCode models.DBVerifyCode
-	if err := service.DB.Where("user_id = ? AND code = ? AND expired_at > ?", userID, code, time.Now()).First(&dbVerifyCode).Error; err != nil {
+	if err := service.DB.Where("email = ? AND code = ? AND expired_at > ?", email, code, time.Now()).First(&dbVerifyCode).Error; err != nil {
 		return fmt.Errorf("验证码错误")
 	}
 
 	if err := service.DB.Unscoped().Delete(&models.DBVerifyCode{}, "id = ?", dbVerifyCode.ID).Error; err != nil {
+		return err
+	}
+
+	var dbUser models.DBUser
+	if err := service.DB.Where("email = ?", email).First(&dbUser).Error; err != nil {
 		return err
 	}
 
@@ -166,13 +171,17 @@ func (service *UserService) RetrievePassword(userID uint, code string, password 
 	}
 
 	// 更新密码
-	dbPassword := models.DBPassword{UserID: userID, Password: string(hashedPassword)}
+	var dbPassword models.DBPassword
+	if err := service.DB.Where("user_id = ?", dbUser.ID).First(&dbPassword).Error; err != nil {
+		return err
+	}
+	dbPassword.Password = string(hashedPassword)
 	if err := service.DB.Save(&dbPassword).Error; err != nil {
 		return err
 	}
 
 	// 移除旧的token
-	if err := service.DB.Unscoped().Delete(&models.DBToken{}, "user_id = ?", userID).Error; err != nil {
+	if err := service.DB.Unscoped().Delete(&models.DBToken{}, "user_id = ?", dbUser.ID).Error; err != nil {
 		return err
 	}
 

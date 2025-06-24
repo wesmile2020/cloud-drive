@@ -28,7 +28,7 @@ func LogMiddleware() gin.HandlerFunc {
 		} else if statusCode >= http.StatusBadRequest {
 			logrus.WithFields(fields).Warn(ctx.Errors.String())
 		} else {
-			logrus.WithFields(fields).Info()
+			logrus.WithFields(fields).Debug()
 		}
 	}
 }

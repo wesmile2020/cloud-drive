@@ -1,4 +1,5 @@
-import React from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+
 import { Link, useParams } from 'react-router';
 import { Breadcrumb, BreadcrumbProps, message, Upload, UploadProps } from 'antd';
 import { HomeFilled, InboxOutlined } from '@ant-design/icons';
@@ -52,17 +53,17 @@ function createBreadcrumbItems(directoryId: number, tree: FileTreeResponse['tree
 
 function HomePage() {
   const params = useParams();
-  const directoryId = React.useMemo(() => {
+  const directoryId = useMemo(() => {
     return Number(params.id);
   }, [params.id]);
-  const [files, setFiles] = React.useState<FileTreeResponse['files']>([]);
-  const [fileTree, setFileTree] = React.useState<FileTreeResponse['tree']>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [breadcrumbs, setBreadcrumbs] = React.useState<BreadcrumbProps['items']>([]);
+  const [files, setFiles] = useState<FileTreeResponse['files']>([]);
+  const [fileTree, setFileTree] = useState<FileTreeResponse['tree']>(null);
+  const [loading, setLoading] = useState(false);
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbProps['items']>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, upload] = useUpload();
 
-  const fetchFiles = React.useCallback(() => {
+  const fetchFiles = useCallback(() => {
     setLoading(true);
     getFiles(directoryId).then((res) => {
       setFiles(res.files);
@@ -79,7 +80,7 @@ function HomePage() {
     });
   }, [directoryId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
 

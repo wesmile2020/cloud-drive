@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, FolderFilled, MoreOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
@@ -29,11 +29,11 @@ const PermissionText = {
 
 function FileList(props: Props) {
   const { files, loading } = props;
-  const domRef = React.useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = React.useState(0);
+  const domRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
   const [userInfo] = useUserInfo();
-  const [operateRecord, setOperateRecord] = React.useState<FileTreeResponse['files'][0] | null>(null);
-  const [openRecordId, setOpenRecordId] = React.useState<number | null>(null);
+  const [operateRecord, setOperateRecord] = useState<FileTreeResponse['files'][0] | null>(null);
+  const [openRecordId, setOpenRecordId] = useState<number | null>(null);
   const [uploadList] = useUpload();
 
   function getOperates(record: FileTreeResponse['files'][0]): MenuProps['items'] {
@@ -193,7 +193,7 @@ function FileList(props: Props) {
     }, 64);
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     initScroll();
     window.addEventListener('resize', initScroll);
     return () => {

@@ -1,6 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Outlet } from 'react-router';
-import React from 'react';
 import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import LoginUser from '@/components/LoginUser';
@@ -22,8 +22,8 @@ const menus = [
 
 function HomeLayout() {
   const location = useLocation();
-  const [selectedKeys, setSelectedKeys] = React.useState<string[]>([])
-  React.useEffect(() => {
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([])
+  useEffect(() => {
     if (/\/home/.test(location.pathname)) {
       setSelectedKeys(['/home']);
       return;

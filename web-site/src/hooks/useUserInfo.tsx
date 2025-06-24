@@ -1,18 +1,18 @@
-import { getUserInfo, UserInfo } from '@/services/api';
-import React from 'react';
+import { useState, useRef, useCallback, createContext, useEffect, useContext, PropsWithChildren } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { getUserInfo, UserInfo } from '@/services/api';
 
 type UserInfoContextType = [UserInfo | null, (toLogin?: boolean, reload?: boolean) => Promise<void>];
 
-const UserInfoContext = React.createContext<UserInfoContextType>([null, () => Promise.resolve()]);
+const UserInfoContext = createContext<UserInfoContextType>([null, () => Promise.resolve()]);
 
-export function UserInfoProvider({ children }: React.PropsWithChildren) {
-  const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
-  const fetchPromise = React.useRef<Promise<UserInfo> | null>(null);
+export function UserInfoProvider({ children }: PropsWithChildren) {
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const fetchPromise = useRef<Promise<UserInfo> | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const fetchUserInfo = React.useCallback(async (toLogin = true, reload = false) => {
+  const fetchUserInfo = useCallback(async (toLogin = true, reload = false) => {
     try {
       if (!fetchPromise.current || reload) {
         fetchPromise.current = getUserInfo();
@@ -27,7 +27,7 @@ export function UserInfoProvider({ children }: React.PropsWithChildren) {
     }
   }, [location.pathname, navigate]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUserInfo(false);
   }, [fetchUserInfo]);
 
@@ -39,4 +39,4 @@ export function UserInfoProvider({ children }: React.PropsWithChildren) {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useUserInfo = () => React.useContext(UserInfoContext);
+export const useUserInfo = () => useContext(UserInfoContext);

@@ -1,4 +1,4 @@
-import { startTransition, useActionState } from 'react';
+import { startTransition, useActionState, useEffect, useRef, useState } from 'react';
 import { Button, Form, Input, message } from 'antd';
 import { LockOutlined, MailOutlined, SendOutlined, VerifiedOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
@@ -14,28 +14,62 @@ interface FormParams {
   confirmPassword: string;
 }
 
+const COUNT_DOWN_TIME_KEY = 'countDownTime';
+
 function RetrievePassword() {
+  const [countDown, setCountDown] = useState(0);
+  const intervalRef = useRef<number>(0);
+
   const [form] = Form.useForm();
+
+  function startCountDown(rest: number) {
+    if (intervalRef.current > 0) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = 0;
+    }
+    setCountDown(rest);
+   
+    intervalRef.current = window.setInterval(() => {
+      setCountDown(countDown => {
+        if (countDown <= 1) {
+          window.clearInterval(intervalRef.current);
+          localStorage.removeItem(COUNT_DOWN_TIME_KEY);
+          intervalRef.current = 0;
+          return 0;
+        }
+        return countDown - 1;
+      });
+    }, 1000);
+  }
+
   const [, sendVerifyCode, verifyCodeLoading] = useActionState(async () => {
     try {
       const { email } = await form.validateFields(['email']);
       await getVerifyCode(email);
       message.success('发送验证码成功');
+      startCountDown(60);
+      localStorage.setItem(COUNT_DOWN_TIME_KEY, Date.now().toString());
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      //
+      // 发送验证码失败
     }
   }, null);
 
   async function onFinish(params: FormParams) {
-    try {
-      await retrievePassword(params.code, params.password);
-      message.success('密码重置成功');
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      //
-    }
+    await retrievePassword(params.email, params.code, params.password);
+    form.resetFields();
+    message.success('密码重置成功');
   }
+
+  useEffect(() => {
+    const time = localStorage.getItem(COUNT_DOWN_TIME_KEY);
+    if (time) {
+      const diff = Date.now() - parseInt(time);
+      if (diff < 60 * 1000) {
+        startCountDown(60 - Math.floor(diff / 1000));
+      }
+    }
+  }, []);
 
   return (
     <CardWrapper title='找回密码'>
@@ -60,9 +94,10 @@ function RetrievePassword() {
                 variant="link"
                 color="primary"
                 loading={verifyCodeLoading}
-                onClick={() => startTransition(sendVerifyCode)}
+                disabled={countDown > 0}
+                onClick={() => startTransition(() => sendVerifyCode())}
               >
-                获取验证码
+                {countDown > 0 ? `${countDown}s` : '获取验证码'}
               </Button>
             }
           />

@@ -1,6 +1,10 @@
+log:
+  level: info
+
 server:
   port: 8080
   mode: debug
+
 database:
   dsn: cloud-drive.db
 
@@ -8,4 +12,4 @@ email:
   host: smtp.qq.com
   port: 465
   password: xxxxxxxxxxxxxx
-  username: xxxxxx@xx.com
+  username: xxxxxx@qq.com

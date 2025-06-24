@@ -1,4 +1,4 @@
-import React from 'react';
+import { createContext, PropsWithChildren, useState, useCallback, useContext } from 'react';
 import { Permission } from '@/config/enums';
 import { uploadFile } from '@/services/api';
 import { Schedule } from '@/utils/Schedule';
@@ -13,16 +13,16 @@ interface UploadItem {
 
 type UploadFunction = (file: File, parentId: number, permission: Permission) => Promise<unknown>;
 
-const UploadContext = React.createContext<[UploadItem[], UploadFunction]>([[], () => Promise.resolve()]);
+const UploadContext = createContext<[UploadItem[], UploadFunction]>([[], () => Promise.resolve()]);
 
 const SLICE_SIZE = 1024 * 1024 * 30; // 30MB per slice;
 
 const schedule = new Schedule(2);
 
-export function UploadProvider(props: React.PropsWithChildren) {
-  const [uploadingFiles, setUploadingFiles] = React.useState<UploadItem[]>([]);
+export function UploadProvider(props: PropsWithChildren) {
+  const [uploadingFiles, setUploadingFiles] = useState<UploadItem[]>([]);
 
-  const upload = React.useCallback((file: File, parentId: number, permission: Permission) => {
+  const upload = useCallback(async (file: File, parentId: number, permission: Permission) => {
     const uploadItem: UploadItem = {
       name: file.name,
       progress: 0,
@@ -90,4 +90,4 @@ export function UploadProvider(props: React.PropsWithChildren) {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useUpload = () => React.useContext(UploadContext);
+export const useUpload = () => useContext(UploadContext);

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { FolderAddOutlined, MoreOutlined } from '@ant-design/icons';
 import { FloatButton, message } from 'antd';
 import CreateDirectory from './CreateDirectory';
@@ -13,7 +13,7 @@ interface Props {
 function HomeMenu(props: Props) {
   const { directoryTree } = props;
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const [userInfo] = useUserInfo();
   async function triggerCreateDirectory() {
     if (!userInfo) {

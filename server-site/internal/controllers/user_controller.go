@@ -252,6 +252,14 @@ func (controller *UserController) UpdatePassword(ctx *gin.Context) {
 		})
 		return
 	}
+	if request.OldPassword == request.NewPassword {
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "新旧密码不能相同",
+			Data:    nil,
+		})
+		return
+	}
 	userID, exists := ctx.Get("userID")
 	if !exists {
 		response := models.Response{
@@ -296,18 +304,8 @@ func (controller *UserController) GetVerifyCode(ctx *gin.Context) {
 		})
 		return
 	}
-	userID, exists := ctx.Get("userID")
-	if !exists {
-		response := models.Response{
-			Code:    http.StatusUnauthorized,
-			Message: "未登录",
-			Data:    nil,
-		}
-		ctx.JSON(http.StatusOK, response)
-		return
-	}
 	// 发送验证码
-	if err := controller.mailService.SendVerifyCode(userID.(uint), request.Email); err != nil {
+	if err := controller.mailService.SendVerifyCode(request.Email); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -341,17 +339,7 @@ func (controller *UserController) RetrievePassword(ctx *gin.Context) {
 		})
 		return
 	}
-	userID, exists := ctx.Get("userID")
-	if !exists {
-		response := models.Response{
-			Code:    http.StatusUnauthorized,
-			Message: "未登录",
-			Data:    nil,
-		}
-		ctx.JSON(http.StatusOK, response)
-		return
-	}
-	if err := controller.userService.RetrievePassword(userID.(uint), request.Code, request.Password); err != nil {
+	if err := controller.userService.RetrievePassword(request.Email, request.Code, request.Password); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -374,6 +362,8 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 		userGroup.POST("/register", controller.RegisterUser)
 		userGroup.POST("/login", controller.LoginUser)
 		userGroup.POST("/logout", controller.Logout)
+		userGroup.POST("/verify_code", controller.GetVerifyCode)
+		userGroup.POST("/retrieve_password", controller.RetrievePassword)
 	}
 	// 验证token的中间件
 	authGroup := router.Group("/user", middlewares.AuthMiddleware(controller.userService.DB))
@@ -381,7 +371,5 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 		authGroup.GET("/info", controller.GetUserInfo)
 		authGroup.PUT("/info", controller.EditUserInfo)
 		authGroup.PUT("/password", controller.UpdatePassword)
-		authGroup.POST("/verify_code", controller.GetVerifyCode)
-		authGroup.POST("/retrieve_password", controller.RetrievePassword)
 	}
 }
