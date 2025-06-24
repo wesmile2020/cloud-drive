@@ -3,6 +3,7 @@ package services
 import (
 	"cloud-drive/internal/models"
 	"fmt"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -82,7 +83,7 @@ func (service *UserService) LoginUser(account, password string) (*models.APIUser
 	return &apiUser, nil
 }
 
-func (service *UserService) SaveToken(tokenString string, userID uint, expiredAt int64) error {
+func (service *UserService) SaveToken(tokenString string, userID uint, expiredAt time.Time) error {
 	dbToken := models.DBToken{
 		Token:     tokenString,
 		UserID:    userID,
@@ -92,7 +93,7 @@ func (service *UserService) SaveToken(tokenString string, userID uint, expiredAt
 }
 
 func (service *UserService) Logout(tokenString string) error {
-	return service.DB.Unscoped().Delete(&models.DBToken{}, "token =?", tokenString).Error
+	return service.DB.Unscoped().Delete(&models.DBToken{}, "token = ?", tokenString).Error
 }
 
 // 获取用户登录信息
@@ -140,5 +141,40 @@ func (service *UserService) EditPassword(userID uint, oldPassword, newPassword s
 	if err := service.DB.Save(&dbPassword).Error; err != nil {
 		return err
 	}
+
+	// 移除旧的token
+	if err := service.DB.Unscoped().Delete(&models.DBToken{}, "user_id = ?", userID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (service *UserService) RetrievePassword(userID uint, code string, password string) error {
+	var dbVerifyCode models.DBVerifyCode
+	if err := service.DB.Where("user_id = ? AND code = ? AND expired_at > ?", userID, code, time.Now()).First(&dbVerifyCode).Error; err != nil {
+		return fmt.Errorf("验证码错误")
+	}
+
+	if err := service.DB.Unscoped().Delete(&models.DBVerifyCode{}, "id = ?", dbVerifyCode.ID).Error; err != nil {
+		return err
+	}
+
+	// 对新密码进行加密
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// 更新密码
+	dbPassword := models.DBPassword{UserID: userID, Password: string(hashedPassword)}
+	if err := service.DB.Save(&dbPassword).Error; err != nil {
+		return err
+	}
+
+	// 移除旧的token
+	if err := service.DB.Unscoped().Delete(&models.DBToken{}, "user_id = ?", userID).Error; err != nil {
+		return err
+	}
+
 	return nil
 }

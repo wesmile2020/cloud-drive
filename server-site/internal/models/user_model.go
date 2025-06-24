@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // APIUser 用于和前端交互的用户模型
 type APIUser struct {
@@ -54,6 +58,18 @@ func (user DBUser) ToAPIUser() APIUser {
 	}
 }
 
+type DBVerifyCode struct {
+	gorm.Model
+	UserID    uint      `gorm:"not null;unique"` // 关联用户 ID
+	Code      string    `gorm:"not null"`        // 验证码
+	ExpiredAt time.Time `gorm:"not null"`        // 过期时间
+}
+
+// TableName 自定义 DBVerifyCode 表名
+func (code DBVerifyCode) TableName() string {
+	return "verify_code"
+}
+
 // RegisterUserRequest 用于接收前端注册用户的参数
 type RegisterUserRequest struct {
 	Name     string `json:"name" binding:"required,min=1,max=50"`
@@ -77,4 +93,13 @@ type EditUserInfoRequest struct {
 type UpdatePasswordRequest struct {
 	OldPassword string `json:"oldPassword" binding:"required"`
 	NewPassword string `json:"newPassword" binding:"required,min=6"`
+}
+
+type GetVerifyCodeRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type RetrievePasswordRequest struct {
+	Code     string `json:"code" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
 }

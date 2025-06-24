@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"cloud-drive/configs"
 	"cloud-drive/internal/controllers"
 	"cloud-drive/internal/services"
 	"cloud-drive/utils"
@@ -9,15 +10,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(engine *gin.Engine, db *gorm.DB, pathUtil *utils.PathUtil) {
+func SetupRouter(engine *gin.Engine, db *gorm.DB, pathUtil *utils.PathUtil, config *configs.Config) {
+
 	group := engine.Group("/api")
 
-	// 注册路由
+	mailService := services.NewMailService(&config.Email, db)
 	userService := services.NewUserService(db)
-	userHandler := controllers.NewUserController(userService)
+	userHandler := controllers.NewUserController(userService, mailService)
 	userHandler.RegisterRoutes(group)
 
-	// 注册路由
 	fileService := services.NewFileService(db, pathUtil)
 	fileHandler := controllers.NewFileController(fileService)
 	fileHandler.RegisterRoutes(group)

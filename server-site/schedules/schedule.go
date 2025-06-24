@@ -11,18 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func Task(db *gorm.DB, pathUtil *utils.PathUtil) {
+func DayTask(db *gorm.DB, pathUtil *utils.PathUtil) {
 
-	logrus.Infof("Running scheduled task")
+	logrus.Infof("Running DayTask task")
 
 	// 删除过期的Token
-	if err := db.Unscoped().Where("expired_at < ?", time.Now().Unix()).Delete(&models.DBToken{}).Error; err != nil {
+	if err := db.Unscoped().Where("expired_at < ?", time.Now()).Delete(&models.DBToken{}).Error; err != nil {
 		logrus.Errorf("Failed to delete expired files: %v", err)
 	}
 
 	// 删除7天前的临时上传文件
 	var tempFiles []models.DBFileChunk
-	if err := db.Where("updated_at < datetime('now', '-7 days')").Find(&tempFiles).Error; err != nil {
+	if err := db.Where("expired_at < ?", time.Now()).Find(&tempFiles).Error; err != nil {
 		logrus.Errorf("Failed to delete expired files: %v", err)
 	}
 	for _, file := range tempFiles {
@@ -36,14 +36,29 @@ func Task(db *gorm.DB, pathUtil *utils.PathUtil) {
 	}
 }
 
+func MinuteTask(db *gorm.DB) {
+	logrus.Infof("Running MinuteTask task")
+
+	// 删除过期验证码
+	if err := db.Unscoped().Where("expired_at < ?", time.Now()).Delete(&models.DBVerifyCode{}).Error; err != nil {
+		logrus.Errorf("Failed to delete expired verify code: %v", err)
+	}
+}
+
 func Run(db *gorm.DB, pathUtil *utils.PathUtil) {
-	Task(db, pathUtil)
+	DayTask(db, pathUtil)
+	MinuteTask(db)
 
 	// 实现定时任务的逻辑
 	cron := cron.New()
-	// 每7天凌晨1点
-	cron.AddFunc("0 1 * * 0", func() {
-		Task(db, pathUtil)
+	// 每天凌晨1点
+	cron.AddFunc("0 0 1 * *", func() {
+		DayTask(db, pathUtil)
+	})
+
+	// 每5分钟执行一次
+	cron.AddFunc("*/5 * * * *", func() {
+		MinuteTask(db)
 	})
 
 	cron.Start()

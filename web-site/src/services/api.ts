@@ -159,3 +159,11 @@ export function editUserInfo(params: EditUserInfoRequest) {
 export function updatePassword(oldPassword: string, newPassword: string) {
   return axios.put('/api/user/password', { oldPassword, newPassword });
 }
+
+export function getVerifyCode(email: string) {
+  return axios.post('/api/user/verify_code', { email });
+}
+
+export function retrievePassword(code: string, password: string) {
+  return axios.post('/api/user/retrieve_password', { code, password });
+}

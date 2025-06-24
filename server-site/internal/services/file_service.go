@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -262,6 +263,7 @@ func (service *FileService) UploadFile(request *models.UploadFileRequest, userID
 			FileID:      fileId,
 			TotalSize:   *request.Total,
 			CurrentSize: currentSize,
+			ExpiredAt:   time.Now().Add(time.Hour * 24 * 7),
 		}
 		if err := service.DB.Create(&fileChunk).Error; err != nil {
 			return "", err

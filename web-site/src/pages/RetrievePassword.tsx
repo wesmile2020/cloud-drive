@@ -1,43 +1,53 @@
-import { Button, Form, Input } from 'antd';
+import { startTransition, useActionState } from 'react';
+import { Button, Form, Input, message } from 'antd';
 import { LockOutlined, MailOutlined, SendOutlined, VerifiedOutlined } from '@ant-design/icons';
-import CardWrapper from '@/components/CardWrapper';
-import styles from './RetrievePassword.module.css';
-import LinkWrapper from '@/components/LinkWrapper';
 import { Link } from 'react-router';
 
-interface MailProps {
-  onChange?: (value: string) => void;
-  value?: string;
-}
+import CardWrapper from '@/components/CardWrapper';
+import LinkWrapper from '@/components/LinkWrapper';
+import { getVerifyCode, retrievePassword } from '@/services/api';
 
-function MailInput(props: MailProps) {
-  
-  return (
-    <div className={styles.mail_input}>
-      <Input
-        placeholder="请输入邮箱"
-        prefix={<MailOutlined />}
-        value={props.value}
-        onChange={(e) => props.onChange?.(e.target.value)}
-      />
-      <Button disabled={!props.value}
-        icon={<SendOutlined />}
-        type='primary'>
-          验证码
-      </Button>
-    </div>
-  );
+interface FormParams {
+  email: string;
+  code: string;
+  password: string;
+  confirmPassword: string;
 }
 
 function RetrievePassword() {
+  const [form] = Form.useForm();
+  const [, sendVerifyCode, verifyCodeLoading] = useActionState(async () => {
+    try {
+      const { email } = await form.validateFields(['email']);
+      await getVerifyCode(email);
+      message.success('发送验证码成功');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      //
+    }
+  }, null);
+
+  async function onFinish(params: FormParams) {
+    try {
+      await retrievePassword(params.code, params.password);
+      message.success('密码重置成功');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      //
+    }
+  }
+
   return (
     <CardWrapper title='找回密码'>
-      <Form>
+      <Form form={form}
+        onFinish={onFinish}>
         <Form.Item
-          name="account"
-          rules={[{ required: true, message: '请输入邮箱' }]}
+          name="email"
+          rules={[{ required: true, type: 'email', message: '请输入邮箱' }]}
         >
-          <MailInput />
+          <Input placeholder="请输入邮箱"
+            prefix={<MailOutlined />}
+          />
         </Form.Item>
         <Form.Item
           name="code"
@@ -45,6 +55,16 @@ function RetrievePassword() {
         >
           <Input placeholder='请输入验证码'
             prefix={<VerifiedOutlined />}
+            suffix={
+              <Button
+                variant="link"
+                color="primary"
+                loading={verifyCodeLoading}
+                onClick={() => startTransition(sendVerifyCode)}
+              >
+                获取验证码
+              </Button>
+            }
           />
         </Form.Item>
         <Form.Item
@@ -80,6 +100,7 @@ function RetrievePassword() {
             type="primary"
             htmlType="submit"
             block
+            icon={<SendOutlined />}
           >
             确认
           </Button>

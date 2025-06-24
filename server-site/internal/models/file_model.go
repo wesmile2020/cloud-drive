@@ -3,6 +3,7 @@ package models
 import (
 	"cloud-drive/permissions"
 	"mime/multipart"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -120,9 +121,10 @@ type UpdateDirectoryRequest struct {
 
 type DBFileChunk struct {
 	gorm.Model
-	FileID      string `gorm:"not null"` // 文件ID
-	TotalSize   uint   `gorm:"not null"` // 总大小
-	CurrentSize uint   `gorm:"not null"` // 当前大小
+	FileID      string    `gorm:"not null"` // 文件ID
+	TotalSize   uint      `gorm:"not null"` // 总大小
+	CurrentSize uint      `gorm:"not null"` // 当前大小
+	ExpiredAt   time.Time `gorm:"not null"` // 过期时间
 }
 
 func (db *DBFileChunk) TableName() string {

@@ -12,12 +12,15 @@ import (
 )
 
 type UserController struct {
-	service *services.UserService
+	userService *services.UserService
+	mailService *services.MailService
 }
 
-func NewUserController(service *services.UserService) *UserController {
+func NewUserController(userService *services.UserService, mailService *services.MailService) *UserController {
+
 	return &UserController{
-		service: service,
+		userService: userService,
+		mailService: mailService,
 	}
 }
 
@@ -45,7 +48,7 @@ func (controller *UserController) RegisterUser(ctx *gin.Context) {
 		Phone: request.Phone,
 	}
 
-	if err := controller.service.RegisterUser(apiUser, request.Password); err != nil {
+	if err := controller.userService.RegisterUser(apiUser, request.Password); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -80,7 +83,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	apiUser, err := controller.service.LoginUser(request.Account, request.Password)
+	apiUser, err := controller.userService.LoginUser(request.Account, request.Password)
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
@@ -102,8 +105,7 @@ func (controller *UserController) LoginUser(ctx *gin.Context) {
 	}
 
 	// 将token存入数据库中
-	expiredAt := time.Now().Add(middlewares.Duration).Unix()
-	if err := controller.service.SaveToken(tokenString, apiUser.ID, expiredAt); err != nil {
+	if err := controller.userService.SaveToken(tokenString, apiUser.ID, time.Now().Add(middlewares.Duration)); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: "save token failed",
@@ -135,7 +137,7 @@ func (controller *UserController) Logout(ctx *gin.Context) {
 		return
 	}
 
-	if err := controller.service.Logout(tokenString); err != nil {
+	if err := controller.userService.Logout(tokenString); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: "logout failed",
@@ -167,7 +169,7 @@ func (controller *UserController) GetUserInfo(ctx *gin.Context) {
 		return
 	}
 
-	user, err := controller.service.GetUserInfo(userID.(uint))
+	user, err := controller.userService.GetUserInfo(userID.(uint))
 	if err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
@@ -217,7 +219,7 @@ func (controller *UserController) EditUserInfo(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response)
 		return
 	}
-	if err := controller.service.EditUserInfo(userID.(uint), apiUser); err != nil {
+	if err := controller.userService.EditUserInfo(userID.(uint), apiUser); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: "编辑用户信息失败",
@@ -260,7 +262,7 @@ func (controller *UserController) UpdatePassword(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, response)
 		return
 	}
-	if err := controller.service.EditPassword(userID.(uint), request.OldPassword, request.NewPassword); err != nil {
+	if err := controller.userService.EditPassword(userID.(uint), request.OldPassword, request.NewPassword); err != nil {
 		response := models.Response{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -277,6 +279,95 @@ func (controller *UserController) UpdatePassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+// 获取验证码
+func (controller *UserController) GetVerifyCode(ctx *gin.Context) {
+	var request models.GetVerifyCodeRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		response := models.Response{
+			Code:    http.StatusUnauthorized,
+			Message: "未登录",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	// 发送验证码
+	if err := controller.mailService.SendVerifyCode(userID.(uint), request.Email); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "验证码发送成功",
+		Data:    nil,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (controller *UserController) RetrievePassword(ctx *gin.Context) {
+	var request models.RetrievePasswordRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		var errorMessages []string
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, validationError := range validationErrors {
+				errorMessages = append(errorMessages, validationError.Error())
+			}
+		}
+		ctx.JSON(http.StatusOK, &models.Response{
+			Code:    http.StatusBadRequest,
+			Message: "请求参数错误",
+			Data:    errorMessages,
+		})
+		return
+	}
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		response := models.Response{
+			Code:    http.StatusUnauthorized,
+			Message: "未登录",
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	if err := controller.userService.RetrievePassword(userID.(uint), request.Code, request.Password); err != nil {
+		response := models.Response{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+			Data:    nil,
+		}
+		ctx.JSON(http.StatusOK, response)
+		return
+	}
+	response := models.Response{
+		Code:    http.StatusOK,
+		Message: "重置密码成功",
+		Data:    nil,
+	}
+	ctx.JSON(http.StatusOK, response)
+}
+
 func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 	userGroup := router.Group("/user")
 	{
@@ -285,10 +376,12 @@ func (controller *UserController) RegisterRoutes(router *gin.RouterGroup) {
 		userGroup.POST("/logout", controller.Logout)
 	}
 	// 验证token的中间件
-	authGroup := router.Group("/user", middlewares.AuthMiddleware(controller.service.DB))
+	authGroup := router.Group("/user", middlewares.AuthMiddleware(controller.userService.DB))
 	{
 		authGroup.GET("/info", controller.GetUserInfo)
 		authGroup.PUT("/info", controller.EditUserInfo)
 		authGroup.PUT("/password", controller.UpdatePassword)
+		authGroup.POST("/verify_code", controller.GetVerifyCode)
+		authGroup.POST("/retrieve_password", controller.RetrievePassword)
 	}
 }
