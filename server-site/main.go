@@ -97,5 +97,7 @@ func main() {
 	// 启动服务器
 	if err := engine.Run(":" + cfg.Server.Port); err != nil {
 		logrus.Errorf("Failed to start server: %v", err)
+	} else {
+		logrus.Infof("Server is running on http://localhost:%s", cfg.Server.Port)
 	}
 }
