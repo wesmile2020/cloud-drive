@@ -10,3 +10,4 @@ dist
 .cloud_drive_files
 server-site/static
 output
+stats.html
