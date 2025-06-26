@@ -95,9 +95,8 @@ func main() {
 	engine.NoRoute(gin.WrapH(http.FileServer(httpFS)))
 
 	// 启动服务器
+	logrus.Infof("Server is running on http://localhost:%s", cfg.Server.Port)
 	if err := engine.Run(":" + cfg.Server.Port); err != nil {
 		logrus.Errorf("Failed to start server: %v", err)
-	} else {
-		logrus.Infof("Server is running on http://localhost:%s", cfg.Server.Port)
 	}
 }

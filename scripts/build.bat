@@ -46,7 +46,7 @@ if "%GOOS%" == "windows" (
   set assetName=%assetName%.exe
 )
 
-go build -o ../output/%assetName% main.go
+go build -o ../out/%assetName% main.go
 if %errorlevel% neq 0 (
   echo go build %GOOS% %GOARCH% failed
   exit /b %errorlevel%

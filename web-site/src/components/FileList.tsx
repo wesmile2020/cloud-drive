@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Avatar, Table, TableColumnType, Tag, Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import { DeleteOutlined, DownloadOutlined, EditOutlined, FolderFilled, MoreOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
@@ -27,16 +27,29 @@ const PermissionText = {
   [Permission.public]: '公开',
 };
 
+type FileItem = FileTreeResponse['files'][0];
+
+interface RecordItem extends FileItem {
+  key: string;
+}
+
 function FileList(props: Props) {
   const { files, loading } = props;
   const domRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
   const [userInfo] = useUserInfo();
-  const [operateRecord, setOperateRecord] = useState<FileTreeResponse['files'][0] | null>(null);
-  const [openRecordId, setOpenRecordId] = useState<number | null>(null);
+  const [editRecord, setEditRecord] = useState<RecordItem | null>(null);
+  const [openRecordId, setOpenRecordId] = useState<string | null>(null);
   const [uploadList] = useUpload();
 
-  function getOperates(record: FileTreeResponse['files'][0]): MenuProps['items'] {
+  const wrappedFiles = useMemo(() => {
+    return files.map(file => ({
+      ...file,
+      key: file.isDirectory ? `d_${file.id}` : `f_${file.id}`,
+    }));
+  }, [files]);
+
+  function getOperates(record: RecordItem): MenuProps['items'] {
     const operates = [
       {
         key: 'edit',
@@ -44,7 +57,7 @@ function FileList(props: Props) {
         icon: <EditOutlined />,
         disabled: userInfo?.id !== record.user.id,
         onClick() {
-          setOperateRecord(record);
+          setEditRecord(record);
         }
       },
       {
@@ -70,7 +83,7 @@ function FileList(props: Props) {
     return operates;
   }
 
-  const columns: TableColumnType<FileTreeResponse['files'][0]>[] = [
+  const columns: TableColumnType<RecordItem>[] = [
     {
       title: '名称',
       dataIndex: 'name',
@@ -147,7 +160,7 @@ function FileList(props: Props) {
           <Dropdown menu={{
               items: getOperates(record),
               onClick() {
-                setOpenRecordId(record.id);
+                setOpenRecordId(record.key);
               },
               _internalRenderMenuItem(originNode, menuItemProps) {
                 if (menuItemProps.eventKey === 'delete') {
@@ -165,14 +178,15 @@ function FileList(props: Props) {
                 return originNode;
               }
             }}
-            open={openRecordId === record.id}
+            open={openRecordId === record.key}
             onOpenChange={(open, info) => {
               if (info.source === 'trigger') {
-                setOpenRecordId(open ? record.id : null);
+                setOpenRecordId(open ? record.key : null);
               }
             }}
             trigger={['click']}
-            disabled={record.isDirectory && record.user.id !== userInfo?.id}>
+            disabled={record.isDirectory && record.user.id !== userInfo?.id}
+          >
             <Button shape='circle'
               icon={<MoreOutlined />}
               type='primary'
@@ -208,23 +222,23 @@ function FileList(props: Props) {
         <Table pagination={false}
           loading={loading}
           columns={columns}
-          dataSource={files}
-          rowKey="id"
+          dataSource={wrappedFiles}
+          rowKey='key'
           scroll={{ y: scrollY }}
           virtual={true}
         />
         {
-          operateRecord && (
-            <UpdateFileModel id={operateRecord.id}
-              open={Boolean(operateRecord)}
+          editRecord && (
+            <UpdateFileModel id={editRecord.id}
+              open={Boolean(editRecord)}
               directoryTree={props.directoryTree}
-              onClose={() => setOperateRecord(null)}
+              onClose={() => setEditRecord(null)}
               values={{
-                directory: operateRecord.name,
-                permission: operateRecord.permission,
+                directory: editRecord.name,
+                permission: editRecord.permission,
               }}
               afterUpdate={props.afterUpdate}
-              type={operateRecord.isDirectory? 'directory' : 'file'}
+              type={editRecord.isDirectory? 'directory' : 'file'}
             />
           )
         }
